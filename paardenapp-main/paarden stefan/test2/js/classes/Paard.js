@@ -1,25 +1,51 @@
 import { generateId } from "../utils.js";
 
+export default class Paard {
+ import { generateId } from "../utils.js";
+
+export class Paard {
+  import { generateId } from "../utils.js";
+
 export class Paard {
   constructor({
     id = generateId("paard"),
     naam = "",
-    leeftijd = "",
+    leeftijd = 0,
     ras = "",
-    stal = "",
+    stallocatie = "",
+    stalnr = 0,
     voeding = "",
-    training = "",
-    opmerkingen = ""
+    training = false,
+    trainer = "",
+    eigenaar = "",
+    dierenarts = "",
+    hoefsmid = "",
+    vaccinatieDatum = "",
+    ontwormingDatum = "",
+    opmerkingen = "",
+    paspoort = null,
+    verslagen = []
   } = {}) {
     this.id = id;
     this.naam = naam;
     this.leeftijd = leeftijd;
     this.ras = ras;
-    this.stal = stal;
+    this.stallocatie = stallocatie;
+    this.stalnr = stalnr;
     this.voeding = voeding;
     this.training = training;
+    this.trainer = trainer;
+    this.eigenaar = eigenaar;
+    this.dierenarts = dierenarts;
+    this.hoefsmid = hoefsmid;
+    this.vaccinatieDatum = vaccinatieDatum;
+    this.ontwormingDatum = ontwormingDatum;
     this.opmerkingen = opmerkingen;
+    this.paspoort = paspoort;
+    this.verslagen = verslagen;
   }
+}
+
 
   static fromJSON(obj) {
     return new Paard(obj);

@@ -1,20 +1,17 @@
+// js/classes/Stal.js
 import { generateId } from "../utils.js";
 
 export class Stal {
   constructor({
     id = generateId("stal"),
-    naam = "",
-    locatie = "",
-    capaciteit = "",
-    bezetting = "",
-    opmerkingen = ""
+    stalnr = 0,
+    locatienaam = "",
+    paardId = null // ID van paard dat in deze stal staat
   } = {}) {
     this.id = id;
-    this.naam = naam;
-    this.locatie = locatie;
-    this.capaciteit = capaciteit;
-    this.bezetting = bezetting;
-    this.opmerkingen = opmerkingen;
+    this.stalnr = stalnr;
+    this.locatienaam = locatienaam;
+    this.paardId = paardId;
   }
 
   static fromJSON(obj) {
@@ -23,9 +20,5 @@ export class Stal {
 
   toJSON() {
     return { ...this };
-  }
-
-  get vrijePlaatsen() {
-    return this.capaciteit - this.bezetting;
   }
 }

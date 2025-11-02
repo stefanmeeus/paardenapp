@@ -1,20 +1,54 @@
 import { saveData, loadData } from "../storage.js";
+import { UploadManager } from "../classes/UploadManager.js";
 
 export class ModalManager {
-  constructor() {}
+  constructor(renderer) {
+    this.renderer = renderer;
+  }
 
-  openPaardForm() {
+  /* =====================================================
+   🐴 FORMULIER PAARD
+  ===================================================== */
+  openPaardForm(paard = null, refreshCallback) {
     const modal = document.createElement("div");
     modal.classList.add("modal");
+
     modal.innerHTML = `
       <div class="modal-content">
-        <h3>Nieuw Paard</h3>
-        <label>Naam: <input id="naam" type="text"></label>
-        <label>Eigenaar: <input id="eigenaar" type="text"></label>
-        <label>Trainer: <input id="trainer" type="text"></label>
-        <label>Dierenarts: <input id="dierenarts" type="text"></label>
-        <label>Hoefsmid: <input id="hoefsmid" type="text"></label>
-        <label>Laatste vaccinatie: <input id="vaccinatie" type="date"></label>
+        <h3>${paard ? "✏️ Bewerken" : "Nieuw Paard"}</h3>
+
+        <label>Naam: <input id="naam" type="text" /></label>
+        <label>Leeftijd: <input id="leeftijd" type="number" /></label>
+        <label>Ras: <input id="ras" type="text" /></label>
+        <label>Stallocatie: <input id="stallocatie" type="text" /></label>
+        <label>Stalnummer: <input id="stalnr" type="number" /></label>
+        <label>Training:
+          <select id="training">
+            <option value="true">Ja</option>
+            <option value="false">Nee</option>
+          </select>
+        </label>
+        <label>Trainer: <input id="trainer" type="text" /></label>
+        <label>Eigenaar: <input id="eigenaar" type="text" /></label>
+        <label>Dierenarts: <input id="dierenarts" type="text" /></label>
+        <label>Hoefsmid: <input id="hoefsmid" type="text" /></label>
+        <label>Laatste vaccinatie: <input id="vaccinatieDatum" type="date" /></label>
+        <label>Laatste ontworming: <input id="ontwormingDatum" type="date" /></label>
+        <label>Opmerkingen: <textarea id="opmerkingen" rows="3"></textarea></label>
+
+        <h4>📁 Documenten</h4>
+        <div>
+          <h5>📘 Paspoort</h5>
+          <div id="paspoortUpload" class="upload-zone"></div>
+          <p class="upload-help">Enkel PDF of afbeelding (JPG, PNG)</p>
+        </div>
+
+        <div>
+          <h5>🩺 Verslagen dierenarts</h5>
+          <div id="verslagenUpload" class="upload-zone"></div>
+          <p class="upload-help">Meerdere PDF’s of afbeeldingen (JPG, PNG)</p>
+        </div>
+
         <div class="modal-buttons">
           <button id="savePaard">Opslaan</button>
           <button id="closeModal">Annuleer</button>
@@ -23,23 +57,238 @@ export class ModalManager {
     `;
 
     document.body.appendChild(modal);
+    modal.style.display = "flex";
 
+    // Velden vooraf invullen
+    if (paard) {
+      modal.querySelector("#naam").value = paard.naam || "";
+      modal.querySelector("#leeftijd").value = paard.leeftijd || "";
+      modal.querySelector("#ras").value = paard.ras || "";
+      modal.querySelector("#stallocatie").value = paard.stallocatie || "";
+      modal.querySelector("#stalnr").value = paard.stalnr || "";
+      modal.querySelector("#training").value = paard.training ? "true" : "false";
+      modal.querySelector("#trainer").value = paard.trainer || "";
+      modal.querySelector("#eigenaar").value = paard.eigenaar || "";
+      modal.querySelector("#dierenarts").value = paard.dierenarts || "";
+      modal.querySelector("#hoefsmid").value = paard.hoefsmid || "";
+      modal.querySelector("#vaccinatieDatum").value = paard.vaccinatieDatum || "";
+      modal.querySelector("#ontwormingDatum").value = paard.ontwormingDatum || "";
+      modal.querySelector("#opmerkingen").value = paard.opmerkingen || "";
+    }
+
+    // Upload zones
+    let gekozenPaspoort = paard?.paspoort || null;
+    let gekozenVerslagen = paard?.verslagen || [];
+
+    const uploader = new UploadManager();
+
+    uploader.createDropzone("paspoortUpload", {
+      multiple: false,
+      onFilesSelected: (files) => {
+        const file = files[0];
+        if (!file) return;
+
+        const reader = new FileReader();
+        reader.onload = e => {
+          gekozenPaspoort = {
+            naam: file.name,
+            type: file.type,
+            data: e.target.result
+          };
+        };
+        reader.readAsDataURL(file);
+      }
+    });
+
+    uploader.createDropzone("verslagenUpload", {
+      multiple: true,
+      onFilesSelected: (files) => {
+        gekozenVerslagen = [];
+        const fileReaders = [];
+
+        Array.from(files).forEach(file => {
+          const reader = new FileReader();
+          const promise = new Promise(resolve => {
+            reader.onload = e => {
+              gekozenVerslagen.push({
+                naam: file.name,
+                type: file.type,
+                data: e.target.result
+              });
+              resolve();
+            };
+          });
+          reader.readAsDataURL(file);
+          fileReaders.push(promise);
+        });
+
+        Promise.all(fileReaders).then(() => {
+          console.log("✅ Alle verslagen ingelezen");
+        });
+      }
+    });
+
+    // Annuleren
     modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+    // Opslaan
     modal.querySelector("#savePaard").addEventListener("click", () => {
-      const paarden = loadData("paarden") || [];
       const nieuwPaard = {
-        id: Date.now(),
-        naam: modal.querySelector("#naam").value,
-        eigenaar: modal.querySelector("#eigenaar").value,
-        trainer: modal.querySelector("#trainer").value,
-        dierenarts: modal.querySelector("#dierenarts").value,
-        hoefsmid: modal.querySelector("#hoefsmid").value,
-        vaccinatie: modal.querySelector("#vaccinatie").value,
+        id: paard?.id || Date.now(),
+        naam: modal.querySelector("#naam").value.trim(),
+        leeftijd: parseInt(modal.querySelector("#leeftijd").value) || 0,
+        ras: modal.querySelector("#ras").value.trim(),
+        stallocatie: modal.querySelector("#stallocatie").value.trim(),
+        stalnr: parseInt(modal.querySelector("#stalnr").value) || 0,
+        training: modal.querySelector("#training").value === "true",
+        trainer: modal.querySelector("#trainer").value.trim(),
+        eigenaar: modal.querySelector("#eigenaar").value.trim(),
+        dierenarts: modal.querySelector("#dierenarts").value.trim(),
+        hoefsmid: modal.querySelector("#hoefsmid").value.trim(),
+        vaccinatieDatum: modal.querySelector("#vaccinatieDatum").value,
+        ontwormingDatum: modal.querySelector("#ontwormingDatum").value,
+        opmerkingen: modal.querySelector("#opmerkingen").value.trim(),
+        paspoort: gekozenPaspoort,
+        verslagen: gekozenVerslagen
       };
-      paarden.push(nieuwPaard);
+
+      if (!nieuwPaard.naam) {
+        alert("❗ Geef een naam op.");
+        return;
+      }
+
+      const paarden = loadData("paarden") || [];
+      const index = paarden.findIndex(p => p.id === nieuwPaard.id);
+
+      if (index > -1) paarden[index] = nieuwPaard;
+      else paarden.push(nieuwPaard);
+
       saveData("paarden", paarden);
       modal.remove();
-      location.reload(); // vernieuw lijst
+      refreshCallback?.();
+    });
+  }
+
+  /* =====================================================
+   📍 FORMULIER STALLOCATIE
+  ===================================================== */
+  openStalLocatieForm(locatie = null, callback) {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    const naam = locatie?.naam || "";
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>${locatie ? "✏️ Bewerken" : "Nieuwe Stallocatie"}</h3>
+        <label>Locatienaam:
+          <input id="locatieNaam" value="${naam}" />
+        </label>
+
+        <div class="modal-buttons">
+          <button id="saveLocatie">Opslaan</button>
+          <button id="closeModal">Annuleer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = "flex";
+
+    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+    modal.querySelector("#saveLocatie").addEventListener("click", () => {
+      const naam = modal.querySelector("#locatieNaam").value.trim();
+      if (!naam) return alert("❗ Naam verplicht");
+
+      const locaties = loadData("locaties") || [];
+
+      // Uniekheid check
+      const bestaat = locaties.some(l => l.naam === naam && l.id !== locatie?.id);
+      if (bestaat) return alert("❌ Locatienaam bestaat al (hoofdlettergevoelig)");
+
+      const nieuwe = {
+        id: locatie?.id || Date.now(),
+        naam
+      };
+
+      const result = locatie
+        ? locaties.map(l => (l.id === locatie.id ? nieuwe : l))
+        : [...locaties, nieuwe];
+
+      saveData("locaties", result);
+      modal.remove();
+      callback?.();
+    });
+  }
+
+  /* =====================================================
+   🏚️ FORMULIER STAL
+  ===================================================== */
+  openStalForm(stal = null, callback) {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    const locatieId = stal?.locatieId || "";
+    const nummer = stal?.nummer || "";
+
+    // Laad locaties als dropdown
+    const locaties = loadData("locaties") || [];
+    const opts = locaties.map(l => `
+      <option value="${l.id}" ${l.id === locatieId ? "selected" : ""}>${l.naam}</option>
+    `).join("");
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>${stal ? "✏️ Stal bewerken" : "Nieuwe Stal"}</h3>
+
+        <label>Locatie:
+          <select id="locatieSelect">${opts}</select>
+        </label>
+
+        <label>Stalnummer:
+          <input id="stalNr" type="number" value="${nummer}" />
+        </label>
+
+        <div class="modal-buttons">
+          <button id="saveStal">Opslaan</button>
+          <button id="closeModal">Annuleer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = "flex";
+
+    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+    modal.querySelector("#saveStal").addEventListener("click", () => {
+      const selectedLoc = modal.querySelector("#locatieSelect").value;
+      const nummer = parseInt(modal.querySelector("#stalNr").value);
+
+      if (!nummer) return alert("❗ Stalnummer verplicht");
+
+      const stallen = loadData("stallen") || [];
+
+      // Check: nummer mag maar 1x in dezelfde locatie
+      const bestaat = stallen.some(
+        s => s.locatieId === selectedLoc && s.nummer === nummer && s.id !== stal?.id
+      );
+      if (bestaat) return alert("❌ Dat nummer bestaat al in deze locatie");
+
+      const nieuwe = {
+        id: stal?.id || Date.now(),
+        locatieId: selectedLoc,
+        nummer
+      };
+
+      const result = stal
+        ? stallen.map(s => (s.id === stal.id ? nieuwe : s))
+        : [...stallen, nieuwe];
+
+      saveData("stallen", result);
+      modal.remove();
+      callback?.();
     });
   }
 }
