@@ -1,16 +1,17 @@
 // js/classes/Stal.js
 import { generateId } from "../utils.js";
-
 export class Stal {
   constructor({
     id = generateId("stal"),
     stalnr = 0,
     locatienaam = "",
-    paardId = null // ID van paard dat in deze stal staat
+    locatieId = "",
+    paardId = null
   } = {}) {
     this.id = id;
     this.stalnr = stalnr;
     this.locatienaam = locatienaam;
+    this.locatieId = locatieId;
     this.paardId = paardId;
   }
 
@@ -22,3 +23,4 @@ export class Stal {
     return { ...this };
   }
 }
+

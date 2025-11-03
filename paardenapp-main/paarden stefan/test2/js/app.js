@@ -36,3 +36,5 @@ document.addEventListener("DOMContentLoaded", () => {
   // 🔹 Startscherm tonen
   renderer.showDashboard();
 });
+window.loadData = loadData;
+window.saveData = saveData;

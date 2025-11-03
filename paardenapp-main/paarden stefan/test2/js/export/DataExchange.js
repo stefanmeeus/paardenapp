@@ -3,7 +3,7 @@ import { saveData, loadData } from "../storage.js";
 
 export class DataExchange {
   // -------------------------------------------------------
-  // 📤 EXPORT naar Excel
+  // 📤 EXPORT PAARDEN
   // -------------------------------------------------------
   static exportPaardenToExcel() {
     const paarden = loadData("paarden") || [];
@@ -16,7 +16,6 @@ export class DataExchange {
       ras: p.ras,
       stallocatie: p.stallocatie,
       stalnr: p.stalnr,
-      voeding: p.voeding,
       training: p.training ? "ja" : "nee",
       trainer: p.trainer,
       eigenaar: p.eigenaar,
@@ -35,7 +34,7 @@ export class DataExchange {
   }
 
   // -------------------------------------------------------
-  // 📄 TEMPLATE DOWNLOAD (lege Excel)
+  // 📄 TEMPLATE PAARDEN
   // -------------------------------------------------------
   static downloadPaardenTemplate() {
     const headers = [[
@@ -44,7 +43,6 @@ export class DataExchange {
       "ras",
       "stallocatie",
       "stalnr",
-      "voeding",
       "training",
       "trainer",
       "eigenaar",
@@ -63,7 +61,7 @@ export class DataExchange {
   }
 
   // -------------------------------------------------------
-  // 📥 IMPORT vanuit Excel
+  // 📥 IMPORT PAARDEN
   // -------------------------------------------------------
   static async importPaardenFromExcel(file, callback) {
     try {
@@ -80,7 +78,7 @@ export class DataExchange {
 
       const normalizeDate = (value) => {
         const date = new Date(value);
-        return isNaN(date) ? "" : date.toISOString().split("T")[0]; // → 'YYYY-MM-DD'
+        return isNaN(date) ? "" : date.toISOString().split("T")[0];
       };
 
       const withIds = geldigePaarden.map(p => ({
@@ -90,7 +88,6 @@ export class DataExchange {
         ras: p.ras || "",
         stallocatie: p.stallocatie || "",
         stalnr: parseInt(p.stalnr) || 0,
-        voeding: p.voeding || "",
         training: (p.training?.toLowerCase?.() === "ja"),
         trainer: p.trainer || "",
         eigenaar: p.eigenaar || "",
@@ -112,6 +109,92 @@ export class DataExchange {
     } catch (err) {
       console.error("❌ Importfout:", err);
       alert("❌ Importeren mislukt. Is het een geldig Excel-bestand?");
+    }
+  }
+
+  // -------------------------------------------------------
+  // 📤 EXPORT STALLEN + LOCATIES
+  // -------------------------------------------------------
+  static exportStallen(locaties = [], stallen = [], paarden = []) {
+    if (!locaties.length || !stallen.length) {
+      alert("⚠️ Geen stallen of locaties beschikbaar om te exporteren.");
+      return;
+    }
+
+    const rows = stallen.map(s => {
+      const locatie = locaties.find(l => String(l.id) === String(s.locatieId));
+      const paard = paarden.find(p => p.id === s.paardId);
+
+      return {
+        stalId: s.id,
+        stalnr: s.stalnr,
+        locatieId: s.locatieId,
+        locatienaam: locatie?.naam || "—",
+        paardId: paard?.id || "",
+        paardNaam: paard?.naam || ""
+      };
+    });
+
+    const worksheet = XLSX.utils.json_to_sheet(rows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "Stallen");
+
+    XLSX.writeFile(workbook, "stallen.xlsx");
+  }
+
+  // -------------------------------------------------------
+  // 📄 TEMPLATE STALLEN
+  // -------------------------------------------------------
+  static downloadStallenTemplate() {
+    const headers = [[
+      "locatieId",
+      "locatienaam",
+      "stalnr",
+      "paardId"
+    ]];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(headers);
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    XLSX.writeFile(wb, "stallen-template.xlsx");
+  }
+
+  // -------------------------------------------------------
+  // 📥 IMPORT STALLEN
+  // -------------------------------------------------------
+  static async importStallen(file, callback) {
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const rows = XLSX.utils.sheet_to_json(sheet);
+
+      const geldige = rows.filter(r => r.locatieId && r.stalnr);
+
+      if (!geldige.length) {
+        alert("⚠️ Geen geldige rijen gevonden. Controleer de locatieId en stalnr.");
+        return;
+      }
+
+      const bestaandeStallen = loadData("stallen") || [];
+
+      const nieuweStallen = geldige.map(r => ({
+        id: Date.now() + Math.floor(Math.random() * 10000),
+        locatieId: r.locatieId,
+        locatienaam: r.locatienaam || "",
+        stalnr: parseInt(r.stalnr),
+        paardId: r.paardId || null
+      }));
+
+      const alles = [...bestaandeStallen, ...nieuweStallen];
+      saveData("stallen", alles);
+
+      alert(`✅ ${nieuweStallen.length} stallen geïmporteerd.`);
+      if (typeof callback === "function") callback();
+    } catch (err) {
+      console.error("❌ Fout bij import:", err);
+      alert("❌ Importeren van stallen mislukt. Is het een geldig Excel-bestand?");
     }
   }
 }

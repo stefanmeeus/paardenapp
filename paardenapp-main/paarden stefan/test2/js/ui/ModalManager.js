@@ -1,5 +1,6 @@
 import { saveData, loadData } from "../storage.js";
 import { UploadManager } from "../classes/UploadManager.js";
+import { Stal } from "../classes/Stal.js";
 
 export class ModalManager {
   constructor(renderer) {
@@ -59,7 +60,6 @@ export class ModalManager {
     document.body.appendChild(modal);
     modal.style.display = "flex";
 
-    // Velden vooraf invullen
     if (paard) {
       modal.querySelector("#naam").value = paard.naam || "";
       modal.querySelector("#leeftijd").value = paard.leeftijd || "";
@@ -76,7 +76,6 @@ export class ModalManager {
       modal.querySelector("#opmerkingen").value = paard.opmerkingen || "";
     }
 
-    // Upload zones
     let gekozenPaspoort = paard?.paspoort || null;
     let gekozenVerslagen = paard?.verslagen || [];
 
@@ -128,10 +127,8 @@ export class ModalManager {
       }
     });
 
-    // Annuleren
     modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
 
-    // Opslaan
     modal.querySelector("#savePaard").addEventListener("click", () => {
       const nieuwPaard = {
         id: paard?.id || Date.now(),
@@ -162,6 +159,17 @@ export class ModalManager {
 
       if (index > -1) paarden[index] = nieuwPaard;
       else paarden.push(nieuwPaard);
+
+      // ✅ FIX: paard koppelen aan stal
+      const stallen = loadData("stallen") || [];
+      const stal = stallen.find(s =>
+        s.stalnr === nieuwPaard.stalnr &&
+        s.stallocatie === nieuwPaard.stallocatie
+      );
+      if (stal) {
+        stal.paardId = nieuwPaard.id;
+        saveData("stallen", stallen);
+      }
 
       saveData("paarden", paarden);
       modal.remove();
@@ -203,7 +211,6 @@ export class ModalManager {
 
       const locaties = loadData("locaties") || [];
 
-      // Uniekheid check
       const bestaat = locaties.some(l => l.naam === naam && l.id !== locatie?.id);
       if (bestaat) return alert("❌ Locatienaam bestaat al (hoofdlettergevoelig)");
 
@@ -225,15 +232,15 @@ export class ModalManager {
   /* =====================================================
    🏚️ FORMULIER STAL
   ===================================================== */
-  openStalForm(stal = null, callback) {
+  openStalForm(stal = null, locatie = null, callback) {
     const modal = document.createElement("div");
     modal.classList.add("modal");
 
-    const locatieId = stal?.locatieId || "";
-    const nummer = stal?.nummer || "";
-
-    // Laad locaties als dropdown
     const locaties = loadData("locaties") || [];
+
+    const locatieId = locatie?.id || stal?.locatieId || "";
+    const nummer = stal?.stalnr || "";
+
     const opts = locaties.map(l => `
       <option value="${l.id}" ${l.id === locatieId ? "selected" : ""}>${l.naam}</option>
     `).join("");
@@ -270,17 +277,21 @@ export class ModalManager {
 
       const stallen = loadData("stallen") || [];
 
-      // Check: nummer mag maar 1x in dezelfde locatie
       const bestaat = stallen.some(
-        s => s.locatieId === selectedLoc && s.nummer === nummer && s.id !== stal?.id
+        s => String(s.locatieId) === String(selectedLoc) &&
+             s.stalnr === nummer &&
+             s.id !== stal?.id
       );
       if (bestaat) return alert("❌ Dat nummer bestaat al in deze locatie");
 
-      const nieuwe = {
-        id: stal?.id || Date.now(),
+      const locatieObj = locatie || locaties.find(l => String(l.id) === String(selectedLoc));
+      const nieuwe = new Stal({
+        id: stal?.id,
         locatieId: selectedLoc,
-        nummer
-      };
+        locatienaam: locatieObj?.naam?.trim() || "",
+        stalnr: nummer,
+        paardId: stal?.paardId || null
+      });
 
       const result = stal
         ? stallen.map(s => (s.id === stal.id ? nieuwe : s))
@@ -291,4 +302,62 @@ export class ModalManager {
       callback?.();
     });
   }
+    /* =====================================================
+   🐴 PAARD KOPPELEN AAN STAL
+  ===================================================== */
+  openPaardKoppelenForm(stal, locatieNaam, callback) {
+    const paarden = loadData("paarden") || [];
+    const stallen = loadData("stallen") || [];
+
+    const vrijePaarden = paarden.filter(p => !p.stalnr && !p.stallocatie);
+
+    if (!vrijePaarden.length) {
+      alert("❗ Geen vrije paarden beschikbaar.");
+      return;
+    }
+
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>🐴 Koppel paard aan Stal ${stal.stalnr} (${locatieNaam})</h3>
+        <label>Selecteer paard:
+          <select id="paardSelect">
+            ${vrijePaarden.map(p => `<option value="${p.id}">${p.naam}</option>`).join("")}
+          </select>
+        </label>
+        <div class="modal-buttons">
+          <button id="koppelBtn">Koppel</button>
+          <button id="closeModal">Annuleer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = "flex";
+
+    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+    modal.querySelector("#koppelBtn").addEventListener("click", () => {
+      const paardId = parseInt(modal.querySelector("#paardSelect").value);
+      const paard = paarden.find(p => p.id === paardId);
+      if (!paard) return;
+
+      // Paard bijwerken
+      paard.stalnr = stal.stalnr;
+      paard.stallocatie = locatieNaam;
+
+      // Stal bijwerken
+      const targetStal = stallen.find(s => s.id === stal.id);
+      if (targetStal) targetStal.paardId = paard.id;
+
+      saveData("paarden", paarden);
+      saveData("stallen", stallen);
+
+      modal.remove();
+      callback?.();
+    });
+  }
+
 }
