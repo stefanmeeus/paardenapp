@@ -704,5 +704,22 @@ body.modal-open {
   margin-top: 4px;
 }
 
+/* tegels layout */
+/* ==== ICON FIX ==== */
+.tile img {
+  width: 60px;
+  height: 60px;
+  object-fit: contain;
+  display: block;
+  margin: 0 auto 8px;
+}
+
+.tile {
+  overflow: hidden;
+}
+.tile img {
+  max-width: 70%;
+  height: auto;
+}
 
 

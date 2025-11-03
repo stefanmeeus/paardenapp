@@ -15,14 +15,44 @@
     <!-- 🔘 Startscherm met tegels -->
     <section id="dashboard" class="dashboard">
       <div class="grid">
-        <div class="tile paarden">🐴 Paarden</div>
-        <div class="tile stallen">🏠 Stallen</div>
-        <div class="tile voeding">🥕 Voeding</div>
-        <div class="tile contacten">📞 Contacten</div>
+        <div class="tile paarden">
+          <img src="img/icons/paard.png" alt="Paarden icoon" class="tile-icon" />
+          <span>Paarden</span>
+        </div>
+
+        <div class="tile stallen">
+          <img src="img/icons/stal.png" alt="Stallen icoon" class="tile-icon" />
+          <span>Stallen</span>
+        </div>
+
+        <div class="tile voeding">
+          <img src="img/icons/voeding.png" alt="Voeding icoon" class="tile-icon" />
+          <span>Voeding</span>
+        </div>
+
+        <div class="tile contacten">
+          <img src="img/icons/contact.png" alt="Contacten icoon" class="tile-icon" />
+          <span>Contacten</span>
+        </div>
+
+        <div class="tile vactinatie">
+          <img src="img/icons/vaccinatie.png" alt="Vaccinatie icoon" class="tile-icon" />
+          <span>Vaccinatie</span>
+        </div>
+
+        <div class="tile contracten">
+          <img src="img/icons/contract.png" alt="Contract icoon" class="tile-icon" />
+          <span>Contracten</span>
+        </div>
+
+        <div class="tile trainingen">
+          <img src="img/icons/training.png" alt="Training icoon" class="tile-icon" />
+          <span>Trainingen</span>
+        </div>
       </div>
     </section>
 
-    <!-- 🗂️ Dynamisch inhoudsgebied, standaard verborgen -->
+    <!-- 🗂️ Dynamisch inhoudsgebied -->
     <section id="tab-container" class="tab-container" style="display: none;">
       <div id="tab-paarden" class="tab-content">Geen paarden gevonden.</div>
       <div id="tab-stallen" class="tab-content">Geen stallen gevonden.</div>
@@ -33,11 +63,10 @@
 
   <!-- Modals worden dynamisch toegevoegd door ModalManager -->
 
-  <!-- ✅ excel -->
-<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <!-- ✅ Excel-bibliotheek -->
+  <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
 
-
-  <!-- ✅ LET OP: js/app.js, niet app.js -->
+  <!-- ✅ Hoofdscript -->
   <script type="module" src="js/app.js"></script>
 </body>
 </html>
