@@ -1,7 +1,29 @@
 {
-  "rewrites": [
-    { "source": "/login", "destination": "/login.html" },
-    { "source": "/admin", "destination": "/admin.html" },
-    { "source": "/", "destination": "/index.html" }
+  "version": 2,
+  "routes": [
+    {
+      "src": "^/$",
+      "dest": "/marketing/index.html"
+    },
+    {
+      "src": "^/login$",
+      "dest": "/auth/login.html"
+    },
+    {
+      "src": "^/reset-password$",
+      "dest": "/auth/reset-password.html"
+    },
+    {
+      "src": "^/app$",
+      "dest": "/app/index.html"
+    },
+    {
+      "src": "^/admin$",
+      "dest": "/admin/admin.html"
+    },
+    {
+      "src": "/(.*)",
+      "dest": "/$1"
+    }
   ]
 }
