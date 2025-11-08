@@ -115,3 +115,75 @@ body {
     grid-template-columns: 1fr;
   }
 }
+/* =========================================
+   🔧 DASHBOARD AANVULLINGEN (v2)
+   ========================================= */
+
+/* Layout van de grafieken */
+.dashboard-charts {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 2rem;
+  margin-top: 2rem;
+}
+
+/* Elk kaartvak */
+.dashboard-card {
+  background: #fff;
+  border-radius: 8px;
+  padding: 1.5rem;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.05);
+}
+
+/* Titel boven grafieken */
+.dashboard-card h3 {
+  margin-bottom: 1rem;
+  font-size: 1rem;
+  color: #333;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+/* Grafiekcontainers kleiner maken */
+.chart-container {
+  position: relative;
+  height: 220px;
+  width: 100%;
+}
+
+/* Donut iets kleiner centreren */
+.donut-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 220px;
+}
+
+/* Bovenste statistieken */
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
+}
+
+.stats-card {
+  background: #fff;
+  border-radius: 10px;
+  padding: 1.5rem;
+  text-align: center;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.05);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.stats-card:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.08);
+}
+
+.stats-card small {
+  display: block;
+  color: #777;
+  margin-top: 0.5rem;
+}

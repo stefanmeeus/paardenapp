@@ -34,21 +34,21 @@
 
       <!-- Statistiek tegels -->
       <section class="stats-grid">
-        <div class="stat-card">
+        <div class="stats-card">
           <h3>👥 Klanten</h3>
           <p class="number">18</p>
           <small>+3 deze maand</small>
         </div>
-        <div class="stat-card">
+        <div class="stats-card">
           <h3>💼 Actieve gebruikers</h3>
           <p class="number">142</p>
           <small>+12 deze week</small>
         </div>
-        <div class="stat-card">
+        <div class="stats-card">
           <h3>🐴 Paarden geregistreerd</h3>
           <p class="number">978</p>
         </div>
-        <div class="stat-card">
+        <div class="stats-card">
           <h3>💶 Inkomsten</h3>
           <p class="number">€3.420</p>
           <small>Laatste 30 dagen</small>
@@ -56,19 +56,33 @@
       </section>
 
       <!-- Grafieken -->
-      <section class="charts">
-        <div class="chart-card">
-          <h3>📅 Klanten & Inkomsten per maand</h3>
-          <canvas id="barChart"></canvas>
+      <section class="dashboard-charts">
+        <div class="dashboard-card">
+          <h3>📅 Klanten per maand</h3>
+          <div class="chart-container">
+            <canvas id="clientsChart"></canvas>
+          </div>
         </div>
-        <div class="chart-card">
+
+        <div class="dashboard-card">
+          <h3>💶 Inkomsten per maand</h3>
+          <div class="chart-container">
+            <canvas id="incomeChart"></canvas>
+          </div>
+        </div>
+
+        <div class="dashboard-card">
           <h3>📦 Modules in gebruik</h3>
-          <canvas id="donutChart"></canvas>
+          <div class="donut-container">
+            <canvas id="modulesDonut"></canvas>
+          </div>
         </div>
       </section>
     </main>
   </div>
-<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+  <!-- JS -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
   <script src="js/admin.js"></script>
 </body>
 </html>

@@ -1,34 +1,62 @@
 document.addEventListener("DOMContentLoaded", () => {
-  const barCtx = document.getElementById("barChart");
-  const donutCtx = document.getElementById("donutChart");
+  const clientsCtx = document.getElementById("clientsChart");
+  const incomeCtx = document.getElementById("incomeChart");
+  const donutCtx = document.getElementById("modulesDonut");
 
-  if (!barCtx || !donutCtx) {
+  if (!clientsCtx || !incomeCtx || !donutCtx) {
     console.error("Canvas-elementen niet gevonden.");
     return;
   }
 
-  // === Staafgrafiek: Klanten & Inkomsten ===
-  new Chart(barCtx.getContext("2d"), {
+  // === Klanten per maand ===
+  new Chart(clientsCtx.getContext("2d"), {
     type: "bar",
     data: {
       labels: ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
       datasets: [
         {
-          label: "Klanten",
+          label: "Aantal klanten",
           data: [3, 5, 8, 12, 15, 18, 21, 25, 27, 30, 33, 35],
           backgroundColor: "rgba(78, 115, 223, 0.8)",
-          borderRadius: 5,
-        },
-        {
-          label: "Inkomsten (€)",
-          data: [400, 550, 700, 950, 1200, 1450, 1600, 1800, 2100, 2300, 2500, 2700],
-          backgroundColor: "rgba(28, 200, 138, 0.8)",
+          borderColor: "rgba(78, 115, 223, 1)",
+          borderWidth: 1,
           borderRadius: 5,
         },
       ],
     },
     options: {
       responsive: true,
+      aspectRatio: 2,
+      plugins: {
+        legend: { position: "bottom" },
+      },
+      scales: {
+        y: { beginAtZero: true, ticks: { stepSize: 5 } },
+      },
+    },
+  });
+
+  // === Inkomsten per maand ===
+  new Chart(incomeCtx.getContext("2d"), {
+    type: "line",
+    data: {
+      labels: ["Jan", "Feb", "Mrt", "Apr", "Mei", "Jun", "Jul", "Aug", "Sep", "Okt", "Nov", "Dec"],
+      datasets: [
+        {
+          label: "Inkomsten (€)",
+          data: [400, 550, 700, 950, 1200, 1450, 1600, 1800, 2100, 2300, 2500, 2700],
+          backgroundColor: "rgba(28, 200, 138, 0.3)",
+          borderColor: "rgba(28, 200, 138, 1)",
+          fill: true,
+          tension: 0.3,
+          pointRadius: 4,
+          pointBackgroundColor: "rgba(28, 200, 138, 1)",
+        },
+      ],
+    },
+    options: {
+      responsive: true,
+      aspectRatio: 2,
       plugins: {
         legend: { position: "bottom" },
       },
@@ -53,16 +81,22 @@ document.addEventListener("DOMContentLoaded", () => {
             "rgba(246, 194, 62, 0.9)",
             "rgba(231, 74, 59, 0.9)",
           ],
-          borderWidth: 1,
+          borderWidth: 2,
+          borderColor: "#fff",
         },
       ],
     },
     options: {
       responsive: true,
+      aspectRatio: 1.2,
       cutout: "70%",
       plugins: {
         legend: {
           position: "bottom",
+          labels: {
+            boxWidth: 15,
+            color: "#333",
+          },
         },
       },
     },
