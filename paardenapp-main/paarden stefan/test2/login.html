@@ -1,0 +1,38 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Inloggen | Paardenbeheer</title>
+  <link rel="stylesheet" href="css/login.css" />
+</head>
+<body>
+  <header class="login-header">
+    <h1>🐴 Paardenbeheer</h1>
+  </header>
+
+  <main class="login-container">
+    <h2>Inloggen</h2>
+
+    <form id="login-form">
+      <label for="email">E-mailadres</label>
+      <input type="email" id="email" placeholder="E-mailadres" required />
+
+      <label for="password">Wachtwoord</label>
+      <input type="password" id="password" placeholder="Wachtwoord" required />
+
+      <button type="submit" id="login-btn">Inloggen</button>
+    </form>
+
+    <div class="extra-links">
+      <a href="#" id="forgot-password">Wachtwoord vergeten?</a>
+    </div>
+
+    <div id="message" class="message"></div>
+  </main>
+
+  <!-- ✅ Supabase + Auth script -->
+  <script type="module" src="js/supabaseClient.js"></script>
+  <script type="module" src="js/auth-login.js"></script>
+</body>
+</html>

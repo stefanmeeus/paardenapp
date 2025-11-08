@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Stefan Admin Dashboard</title>
+  <link rel="stylesheet" href="css/admin.css" />
+  <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+
+<body>
+  <div class="admin-layout">
+    <!-- Zijbalk -->
+    <aside class="sidebar">
+      <div class="logo">
+        <h2>🐴 StefanApp</h2>
+        <p class="role">Super Admin</p>
+      </div>
+      <nav class="menu">
+        <a href="#" class="active">Dashboard</a>
+        <a href="#">Klanten</a>
+        <a href="#">Facturen</a>
+        <a href="#">Modules</a>
+        <a href="#">Instellingen</a>
+      </nav>
+    </aside>
+
+    <!-- Hoofdinhoud -->
+    <main class="main-content">
+      <header class="admin-header">
+        <h1>📊 Beheer Dashboard</h1>
+        <span class="welcome">Welkom, Stefan</span>
+      </header>
+
+      <!-- Statistiek tegels -->
+      <section class="stats-grid">
+        <div class="stat-card">
+          <h3>👥 Klanten</h3>
+          <p class="number">18</p>
+          <small>+3 deze maand</small>
+        </div>
+        <div class="stat-card">
+          <h3>💼 Actieve gebruikers</h3>
+          <p class="number">142</p>
+          <small>+12 deze week</small>
+        </div>
+        <div class="stat-card">
+          <h3>🐴 Paarden geregistreerd</h3>
+          <p class="number">978</p>
+        </div>
+        <div class="stat-card">
+          <h3>💶 Inkomsten</h3>
+          <p class="number">€3.420</p>
+          <small>Laatste 30 dagen</small>
+        </div>
+      </section>
+
+      <!-- Grafieken -->
+      <section class="charts">
+        <div class="chart-card">
+          <h3>📅 Klanten & Inkomsten per maand</h3>
+          <canvas id="barChart"></canvas>
+        </div>
+        <div class="chart-card">
+          <h3>📦 Modules in gebruik</h3>
+          <canvas id="donutChart"></canvas>
+        </div>
+      </section>
+    </main>
+  </div>
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+  <script src="js/admin.js"></script>
+</body>
+</html>
