@@ -1,29 +1,17 @@
 {
   "version": 2,
+  "public": true,
+  "builds": [
+    { "src": "public/**/*", "use": "@vercel/static" },
+    { "src": "admin/**/*", "use": "@vercel/static" },
+    { "src": "app/**/*", "use": "@vercel/static" },
+    { "src": "auth/**/*", "use": "@vercel/static" },
+    { "src": "marketing/**/*", "use": "@vercel/static" }
+  ],
   "routes": [
-    {
-      "src": "^/$",
-      "dest": "/marketing/index.html"
-    },
-    {
-      "src": "^/login$",
-      "dest": "/auth/login.html"
-    },
-    {
-      "src": "^/reset-password$",
-      "dest": "/auth/reset-password.html"
-    },
-    {
-      "src": "^/app$",
-      "dest": "/app/index.html"
-    },
-    {
-      "src": "^/admin$",
-      "dest": "/admin/admin.html"
-    },
-    {
-      "src": "/(.*)",
-      "dest": "/$1"
-    }
+    { "src": "^/admin/(.*)$", "dest": "/admin/$1" },
+    { "src": "^/app/(.*)$", "dest": "/app/$1" },
+    { "src": "^/auth/(.*)$", "dest": "/auth/$1" },
+    { "src": "^/(.*)$", "dest": "/marketing/$1" }
   ]
 }
