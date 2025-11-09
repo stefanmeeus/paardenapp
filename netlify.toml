@@ -1,0 +1,34 @@
+[build]
+  # geen build command voor pure static site; pas aan als je een bundler gebruikt
+  publish = "public"
+
+# redirect rules: mapping van nette URLs naar de afzonderlijke HTML files
+[[redirects]]
+  from = "/"
+  to = "/public/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/login"
+  to = "/auth/login.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/reset-password"
+  to = "/auth/reset-password.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/app/*"
+  to = "/app/index.html"
+  status = 200
+  force = true
+
+[[redirects]]
+  from = "/admin/*"
+  to = "/admin/admin.html"
+  status = 200
+  force = true
