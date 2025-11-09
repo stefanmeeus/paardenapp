@@ -3,3 +3,4 @@
 /admin/*       /admin/admin.html       200
 /marketing/*   /marketing/index.html   200
 /*             /marketing/index.html   200
+/*    /marketing/index.html   200

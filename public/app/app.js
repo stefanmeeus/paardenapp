@@ -1,8 +1,12 @@
 // ✅ app.js
 
-import { Renderer } from "./ui/Renderer.js";
-import { ModalManager } from "./ui/ModalManager.js";
-import { loadData, saveData } from "./storage.js";
+// ✅ app/app.js
+import { Renderer } from "../js/ui/Renderer.js";
+import { ModalManager } from "../js/ui/ModalManager.js";
+import { loadData, saveData } from "../js/storage.js";
+
+
+
 
 document.addEventListener("DOMContentLoaded", () => {
   console.log("✅ Paardenbeheer geladen");
