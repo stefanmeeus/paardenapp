@@ -1,0 +1,5 @@
+/auth/*        /auth/login.html        200
+/app/*         /app/index.html         200
+/admin/*       /admin/admin.html       200
+/marketing/*   /marketing/index.html   200
+/*             /marketing/index.html   200
