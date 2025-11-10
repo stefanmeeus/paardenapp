@@ -789,5 +789,26 @@ body.modal-open {
 #dashboard[style*="display: none"] {
   visibility: hidden !important;
 }
+/* ✅ --- FINAL FIX: Zichtbare tabs --- */
+section.tab {
+  display: none !important;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
 
+section.tab.active {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
 
+#dashboard {
+  display: block !important;
+  visibility: visible !important;
+}
+
+#tab-container {
+  display: block !important;
+  visibility: visible !important;
+  overflow: visible !important;
+}

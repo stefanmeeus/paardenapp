@@ -21,62 +21,62 @@ export class Renderer {
     t.style.transition = "";
   });
 }
-// ✅ _switchToTab(id) — definitieve werkende versie
+// ✅ _switchToTab(id) — definitieve versie (dashboard verdwijnt bij openen tab)
+// Toon specifieke tab (en verberg dashboard)
 _switchToTab(id) {
   const dashboard = document.getElementById("dashboard");
   const container = this.container || document.querySelector("#tab-container");
 
-  if (!dashboard || !container) {
-    console.warn("Renderer: dashboard of container niet gevonden");
+  if (!container) {
+    console.warn("Renderer: container niet gevonden");
     return;
   }
 
-  // Laat dashboard zichtbaar — we willen dat niet verbergen
-  dashboard.style.display = "block";
+  // Dashboard verbergen bij openen van tab
+  if (dashboard) dashboard.style.display = "none";
+
+  // Container zichtbaar maken
   container.style.display = "block";
 
   // Verberg eerst alle tabs
   this._hideAllTabs();
 
-  // Zoek de tab die we willen tonen
+  // Zoek de juiste tab
   const tab = document.getElementById(id);
   if (!tab) {
-    console.warn(`Renderer: Tab met id "${id}" niet gevonden.`);
+    console.warn(`Renderer: tab met id "${id}" niet gevonden.`);
     return;
   }
 
-  // Toon de tab met fade-in effect
+  // Fade-in animatie
   tab.style.display = "block";
   tab.style.opacity = "0";
   tab.style.transition = "opacity 260ms ease-in-out";
-
-  // force reflow
-  tab.offsetWidth;
+  tab.offsetWidth; // force reflow
 
   requestAnimationFrame(() => {
     tab.classList.add("active", "fade-in");
     tab.style.opacity = "1";
   });
 
-  // Opruimen na animatie
+  // Opruimen van inline styles
   setTimeout(() => {
     tab.style.opacity = "";
     tab.style.transition = "";
   }, 350);
-
-  // Scroll/focus verbetering
-  try {
-    container.scrollTop = 0;
-    const firstFocusable = tab.querySelector("button, a, input, [tabindex]");
-    if (firstFocusable) firstFocusable.focus();
-  } catch (e) {}
 }
 
-  showDashboard() {
-    document.getElementById("dashboard").style.display = "block";
-    this.container.style.display = "none";
-    this._hideAllTabs();
-  }
+// Toon het dashboard en verberg de tabs
+showDashboard() {
+  const dashboard = document.getElementById("dashboard");
+  const container = this.container || document.querySelector("#tab-container");
+
+  if (dashboard) dashboard.style.display = "block";
+  if (container) container.style.display = "none";
+
+  this._hideAllTabs();
+}
+
 
  // -------------------------------------------------------
 // PAARDEN (async, Supabase-ready)
