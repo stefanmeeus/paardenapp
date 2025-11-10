@@ -492,6 +492,18 @@ body.modal-open {
 .paard-card:hover {
   background: #f0f8ff;
 }
+.tab-content {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease;
+}
+
+.tab-content.active {
+  display: block !important;
+  opacity: 1 !important;
+  visibility: visible !important;
+}
+
 /* ==== FIXED MODAL OVERLAY STYLE ==== */
 .modal-overlay {
   position: fixed;
@@ -720,6 +732,42 @@ body.modal-open {
 .tile img {
   max-width: 70%;
   height: auto;
+}
+.tab-content {
+  display: none; /* default hidden */
+  opacity: 0;
+}
+
+.tab-content.active {
+  display: block;
+  opacity: 1;
+}
+
+.fade-in {
+  /* fallback - transition gezet vanuit JS maar zorg voor consistentie */
+  transition: opacity 350ms ease-in-out;
+}
+/* --- Fix tab-weergave --- */
+.tab-container {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-height: 70vh;
+  position: relative;
+}
+
+.tab-content {
+  display: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+  padding: 1rem;
+}
+
+.tab-content.active {
+  display: block !important;
+  opacity: 1 !important;
+  position: relative;
+  z-index: 5;
 }
 
 

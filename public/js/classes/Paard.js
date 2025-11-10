@@ -1,10 +1,5 @@
+// ✅ Correcte versie van Paard.js
 import { generateId } from "../utils.js";
-
-export default class Paard {
- import { generateId } from "../utils.js";
-
-export class Paard {
-  import { generateId } from "../utils.js";
 
 export class Paard {
   constructor({
@@ -44,9 +39,8 @@ export class Paard {
     this.paspoort = paspoort;
     this.verslagen = verslagen;
   }
-}
 
-
+  // ✅ Hulpfuncties
   static fromJSON(obj) {
     return new Paard(obj);
   }

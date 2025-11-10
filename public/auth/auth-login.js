@@ -1,4 +1,5 @@
-import { supabase } from "./supabaseClient.js";
+// ✅ Correcte import — één map omhoog naar /public/js/supabaseClient.js
+import { supabase } from "../js/supabaseClient.js";
 
 const form = document.getElementById("login-form");
 const message = document.getElementById("message");
@@ -13,7 +14,8 @@ form.addEventListener("submit", async (e) => {
   const password = document.getElementById("password").value.trim();
 
   if (!email || !password) {
-    message.textContent = "Vul alle velden in.";
+    message.style.color = "red";
+    message.textContent = "❗ Vul alle velden in.";
     return;
   }
 
@@ -23,13 +25,16 @@ form.addEventListener("submit", async (e) => {
   });
 
   if (error) {
+    message.style.color = "red";
     message.textContent = "❌ " + error.message;
   } else {
     message.style.color = "green";
     message.textContent = "✅ Ingelogd, even geduld...";
-    // ⏩ Stuur door naar de hoofdapp
+
+    // ⏩ Stuur correct door naar de hoofdapp
     setTimeout(() => {
-      window.location.href = "index.html";
+      // Aangezien alles in /public zit:
+      window.location.href = "../app/index.html";
     }, 1500);
   }
 });

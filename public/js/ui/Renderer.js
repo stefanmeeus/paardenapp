@@ -1,7 +1,9 @@
+// public/js/ui/Renderer.js
 import { ModalManager } from "./ModalManager.js";
 import { loadData, saveData } from "../storage.js";
 import { DataExchange } from "../export/DataExchange.js";
 import { DocumentManager } from "../managers/DocumentManager.js";
+import { supabase } from "/js/supabaseClient.js";
 
 export class Renderer {
   constructor(container) {
@@ -10,22 +12,54 @@ export class Renderer {
   }
 
   _hideAllTabs() {
-    document.querySelectorAll(".tab-content").forEach(tab => {
-      tab.classList.remove("active", "fade-in");
-      tab.style.display = "none";
-    });
+  // Verberg alle tab-content elementen netjes en reset styles
+  const tabs = document.querySelectorAll(".tab-content");
+  tabs.forEach(t => {
+    t.classList.remove("active", "fade-in");
+    t.style.display = "none";
+    t.style.opacity = "";
+    t.style.transition = "";
+  });
+}
+
+_switchToTab(id) {
+  // defensive: dashboard bestaan check
+  const dashboard = document.getElementById("dashboard");
+  if (dashboard) dashboard.style.display = "none";
+
+  // Zorg dat container aanwezig is
+  if (!this.container) {
+    console.warn("⚠️ Renderer.container ontbreekt — controleer initialisatie.");
+    return;
+  }
+  this.container.style.display = "block";
+
+  // Verberg andere tabs
+  this._hideAllTabs();
+
+  // Haal tab op
+  const tab = document.getElementById(id);
+  if (!tab) {
+    console.warn(`⚠️ Tab met id "${id}" niet gevonden.`);
+    return;
   }
 
-  _switchToTab(id) {
-    document.getElementById("dashboard").style.display = "none";
-    this.container.style.display = "block";
-    this._hideAllTabs();
-    const tab = document.getElementById(id);
-    if (tab) {
-      tab.classList.add("active", "fade-in");
-      tab.style.display = "block";
-    }
-  }
+  // Reset en forceer repaint voordat we animatie starten
+  tab.style.display = "block";
+  tab.style.opacity = "0";
+  tab.style.transition = "none";
+
+  // Force browser reflow / repaint
+  // (read layout) — zorgt dat transition daarna wel getriggerd wordt
+  void tab.offsetWidth;
+
+  // Start fade-in met nette transition
+  requestAnimationFrame(() => {
+    tab.style.transition = "opacity 350ms ease-in-out";
+    tab.style.opacity = "1";
+    tab.classList.add("active", "fade-in");
+  });
+}
 
   showDashboard() {
     document.getElementById("dashboard").style.display = "block";
@@ -33,127 +67,182 @@ export class Renderer {
     this._hideAllTabs();
   }
 
-  // -------------------------------------------------------
-  // PAARDEN
-  // -------------------------------------------------------
-  showPaarden() {
-    this._switchToTab("tab-paarden");
+ // -------------------------------------------------------
+// PAARDEN (async, Supabase-ready)
+// -------------------------------------------------------
+async showPaarden() {
+  this._switchToTab("tab-paarden");
 
-    let paarden = loadData("paarden") || [];
-    let currentPage = 1;
-    let pageSize = 4;
-    let searchTerm = "";
-    let sortAsc = true;
-
-    const container = document.getElementById("tab-paarden");
-
-    const render = () => {
-      const filtered = paarden
-        .filter(p => p.naam.toLowerCase().includes(searchTerm.toLowerCase()))
-        .sort((a, b) => sortAsc ? a.naam.localeCompare(b.naam) : b.naam.localeCompare(a.naam));
-
-      const totalPages = Math.ceil(filtered.length / pageSize);
-      const offset = (currentPage - 1) * pageSize;
-      const pageItems = filtered.slice(offset, offset + pageSize);
-
-      const listHTML = pageItems.length
-        ? `<div class="paard-grid">
-            ${pageItems.map(p => `
-              <div class="card paard-card" data-id="${p.id}">
-                <h3>${p.naam}</h3>
-                <p><strong>Eigenaar:</strong> ${p.eigenaar}</p>
-                <p><strong>Dierenarts:</strong> ${p.dierenarts}</p>
-              </div>
-            `).join("")}
-          </div>`
-        : `<div class="empty-state">🚫 Geen paarden gevonden.</div>`;
-
-      container.innerHTML = `
-        <div class="tab-header">
-          <button class="back-btn" id="backBtn">⬅ Terug</button>
-          <h2>📁 Paarden</h2>
-        </div>
-
-        <div class="paarden-search-wrapper">
-          <input type="text" id="searchInput" class="search-input" placeholder="Zoek op naam..." value="${searchTerm}" />
-          <div class="page-size-wrapper">
-            <label for="pageSizeSelect">Per pagina:</label>
-            <select id="pageSizeSelect">
-              ${[2, 4, 6, 10].map(n => `<option value="${n}" ${n === pageSize ? "selected" : ""}>${n}</option>`).join("")}
-            </select>
-          </div>
-          <button id="sortBtn" class="btn-secondary">Sorteer: ${sortAsc ? "A → Z" : "Z → A"}</button>
-          <button id="exportBtn" class="btn-secondary">📤 Exporteer</button>
-          <button id="downloadTemplate" class="btn-secondary">📄 Sjabloon</button>
-          <label class="btn-secondary" style="cursor: pointer;">
-            📥 Importeren
-            <input type="file" id="importInput" accept=".xlsx,.xls" style="display: none;" />
-          </label>
-          <button id="addPaard" class="btn-primary">+ Nieuw Paard</button>
-        </div>
-
-        ${listHTML}
-
-        <div class="pagination">
-          <button id="prevPage" ${currentPage === 1 ? "disabled" : ""}>◀</button>
-          <span>Pagina ${currentPage} / ${totalPages || 1}</span>
-          <button id="nextPage" ${currentPage === totalPages || totalPages === 0 ? "disabled" : ""}>▶</button>
-        </div>
-      `;
-
-      document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
-      document.getElementById("addPaard").addEventListener("click", () => this.modals.openPaardForm(null, () => this.showPaarden()));
-      document.getElementById("exportBtn").addEventListener("click", () => DataExchange.exportPaardenToExcel());
-      document.getElementById("downloadTemplate").addEventListener("click", () => DataExchange.downloadPaardenTemplate());
-      document.getElementById("importInput").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          await DataExchange.importPaardenFromExcel(file, () => this.showPaarden());
-        }
-      });
-
-      container.querySelectorAll(".paard-card").forEach(card => {
-        const id = parseInt(card.dataset.id);
-        const paard = paarden.find(p => p.id === id);
-        if (paard) {
-          card.addEventListener("click", () => this.showPaardDetails(paard));
-        }
-      });
-
-      document.getElementById("searchInput").addEventListener("input", e => {
-        searchTerm = e.target.value;
-        currentPage = 1;
-        render();
-      });
-
-      document.getElementById("pageSizeSelect").addEventListener("change", e => {
-        pageSize = parseInt(e.target.value);
-        currentPage = 1;
-        render();
-      });
-
-      document.getElementById("sortBtn").addEventListener("click", () => {
-        sortAsc = !sortAsc;
-        render();
-      });
-
-      document.getElementById("prevPage").addEventListener("click", () => {
-        if (currentPage > 1) {
-          currentPage--;
-          render();
-        }
-      });
-
-      document.getElementById("nextPage").addEventListener("click", () => {
-        if (currentPage < totalPages) {
-          currentPage++;
-          render();
-        }
-      });
-    };
-
-    render();
+  // 🔹 Veilig laden van paarden uit Supabase
+  let paarden = [];
+  try {
+    const res = await loadData("paarden"); // async Supabase-call
+    paarden = Array.isArray(res) ? res : [];
+  } catch (err) {
+    console.warn("⚠️ Fout bij loadData('paarden'):", err);
+    paarden = [];
   }
+
+  let currentPage = 1;
+  let pageSize = 4;
+  let searchTerm = "";
+  let sortAsc = true;
+
+  const container = document.getElementById("tab-paarden");
+  if (!container) {
+    console.error("❌ Container #tab-paarden niet gevonden.");
+    return;
+  }
+
+  // 🔹 Helper om veilig tekst te renderen
+  const safe = (str = "") => String(str).replace(/"/g, "&quot;").replace(/</g, "&lt;");
+
+  const render = () => {
+    if (!container) return;
+
+    const filtered = (paarden || [])
+      .filter(p => (p.naam || "").toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) => sortAsc
+        ? (a.naam || "").localeCompare(b.naam || "")
+        : (b.naam || "").localeCompare(a.naam || "")
+      );
+
+    const totalPages = Math.max(1, Math.ceil(filtered.length / pageSize));
+    const offset = (currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(offset, offset + pageSize);
+
+    // 🔹 Toon kaarten of lege melding
+    const listHTML = pageItems.length
+      ? `<div class="paard-grid">
+          ${pageItems.map(p => `
+            <div class="card paard-card" data-id="${p.id}">
+              <h3>${safe(p.naam || "Onbekend")}</h3>
+              <p><strong>Eigenaar:</strong> ${safe(p.eigenaar || "–")}</p>
+              <p><strong>Dierenarts:</strong> ${safe(p.dierenarts || "–")}</p>
+            </div>
+          `).join("")}
+        </div>`
+      : `<div class="empty-state">🚫 Geen paarden gevonden.</div>`;
+
+    // 🔹 HTML renderen in container
+    container.innerHTML = String.raw`
+      <div class="tab-header">
+        <button class="back-btn" id="backBtn">⬅ Terug</button>
+        <h2>📁 Paarden</h2>
+      </div>
+      <div class="paarden-search-wrapper">
+        <input 
+          type="text" 
+          id="searchInput" 
+          class="search-input" 
+          placeholder="Zoek op naam..." 
+          value="${safe(searchTerm)}" 
+        />
+        <div class="page-size-wrapper">
+          <label for="pageSizeSelect">Per pagina:</label>
+          <select id="pageSizeSelect">
+            ${[2, 4, 6, 10].map(n => `<option value="${n}" ${n === pageSize ? "selected" : ""}>${n}</option>`).join("")}
+          </select>
+        </div>
+        <button id="sortBtn" class="btn-secondary">Sorteer: ${sortAsc ? "A → Z" : "Z → A"}</button>
+        <button id="exportBtn" class="btn-secondary">📤 Exporteer</button>
+        <button id="downloadTemplate" class="btn-secondary">📄 Sjabloon</button>
+        <label class="btn-secondary" style="cursor: pointer;">
+          📥 Importeren
+          <input type="file" id="importInput" accept=".xlsx,.xls" style="display: none;" />
+        </label>
+        <button id="addPaard" class="btn-primary">+ Nieuw Paard</button>
+      </div>
+
+      ${listHTML}
+
+      <div class="pagination">
+        <button id="prevPage" ${currentPage === 1 ? "disabled" : ""}>◀</button>
+        <span>Pagina ${currentPage} / ${totalPages}</span>
+        <button id="nextPage" ${currentPage === totalPages ? "disabled" : ""}>▶</button>
+      </div>
+    `;
+    console.log("💡 Container bestaat nog?", !!document.getElementById("tab-paarden"));
+setTimeout(() => {
+  console.log("🔍 Na 1 seconde nog steeds:", document.getElementById("tab-paarden")?.innerHTML?.slice(0, 500));
+}, 1000);
+
+
+    console.log("✅ HTML ingevuld in container:", container.innerHTML.slice(0, 200));
+
+    // 🔹 Buttons en events
+    const backBtn = document.getElementById("backBtn");
+    if (backBtn) backBtn.addEventListener("click", () => this.showDashboard());
+
+    const addPaardBtn = document.getElementById("addPaard");
+    if (addPaardBtn)
+      addPaardBtn.addEventListener("click", () =>
+        this.modals.openPaardForm(null, () => this.showPaarden())
+      );
+
+    const exportBtn = document.getElementById("exportBtn");
+    if (exportBtn && DataExchange.exportPaardenToExcel)
+      exportBtn.addEventListener("click", () => DataExchange.exportPaardenToExcel());
+
+    const downloadTemplate = document.getElementById("downloadTemplate");
+    if (downloadTemplate && DataExchange.downloadPaardenTemplate)
+      downloadTemplate.addEventListener("click", () => DataExchange.downloadPaardenTemplate());
+
+    const importInput = document.getElementById("importInput");
+    if (importInput && DataExchange.importPaardenFromExcel)
+      importInput.addEventListener("change", async (e) => {
+        const file = e.target.files[0];
+        if (file) await DataExchange.importPaardenFromExcel(file, () => this.showPaarden());
+      });
+
+    // 🔹 Klik op paardkaart → detail
+    container.querySelectorAll(".paard-card").forEach(card => {
+      const id = card.dataset?.id;
+      const paard = paarden.find(p => String(p.id) === String(id));
+      if (paard) card.addEventListener("click", () => this.showPaardDetails(paard));
+    });
+
+    // 🔹 Filters, sortering & paginatie
+    const searchInput = document.getElementById("searchInput");
+    if (searchInput) searchInput.addEventListener("input", e => {
+      searchTerm = e.target.value || "";
+      currentPage = 1;
+      render();
+    });
+
+    const pageSizeSelect = document.getElementById("pageSizeSelect");
+    if (pageSizeSelect) pageSizeSelect.addEventListener("change", e => {
+      pageSize = parseInt(e.target.value, 10) || 4;
+      currentPage = 1;
+      render();
+    });
+
+    const sortBtnEl = document.getElementById("sortBtn");
+    if (sortBtnEl) sortBtnEl.addEventListener("click", () => {
+      sortAsc = !sortAsc;
+      render();
+    });
+
+    const prevPage = document.getElementById("prevPage");
+    if (prevPage) prevPage.addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        render();
+      }
+    });
+
+    const nextPage = document.getElementById("nextPage");
+    if (nextPage) nextPage.addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        render();
+      }
+    });
+  };
+
+  console.log("🎨 Render functie gestart", paarden.length, "records");
+  render();
+}
 
   showPaardDetails(paard) {
     const tab = document.getElementById("tab-paarden");
@@ -248,13 +337,12 @@ export class Renderer {
       multiple: true,
       onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
     });
-  }
+  } 
 
-
-// -------------------------------------------------------
+  // -------------------------------------------------------
 // STALLEN
 // -------------------------------------------------------
-showStallen() {
+  showStallen() {
     this._switchToTab("tab-stallen");
 
     const stallenContainer = document.getElementById("tab-stallen");
@@ -425,7 +513,7 @@ showStallen() {
 
     render();
   }
- // -------------------------------------------------------
+  // -------------------------------------------------------
   // OVERIGE TABS
   // -------------------------------------------------------
   showVoeding() {
@@ -437,18 +525,8 @@ showStallen() {
       </div>
       <p>Voedingsschema’s volgen...</p>
     `;
-    document.getElementById("backBtn").addEventListener("click", () => {
-      this.showDashboard();
-    });
-  
-
-      document.getElementById("importStallen").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          await DataExchange.importStallen(file, () => this.showStallen());
-        }
-      });
-    };
+    document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+  }
 
   showContacten() {
     this._switchToTab("tab-contacten");
@@ -459,10 +537,6 @@ showStallen() {
       </div>
       <p>Contactpersonen volgen...</p>
     `;
-    document.getElementById("backBtn").addEventListener("click", () => {
-      this.showDashboard();
-    });
-    render();
-  };
+    document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+  }
 }
-
