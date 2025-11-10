@@ -769,5 +769,25 @@ body.modal-open {
   position: relative;
   z-index: 5;
 }
+/* ✅ Forceer zichtbaarheid van de actieve tabcontainer */
+.tab-container {
+  display: block !important;
+  position: relative !important;
+  width: 100% !important;
+  min-height: 90vh !important;
+  overflow: visible !important;
+}
+
+/* ✅ Zorg dat de actieve tab getoond wordt */
+.tab-content.active {
+  display: block !important;
+  opacity: 1 !important;
+  transition: opacity 0.3s ease-in-out;
+}
+
+/* ✅ Dashboard verbergen wanneer een tab actief is */
+#dashboard[style*="display: none"] {
+  visibility: hidden !important;
+}
 
 

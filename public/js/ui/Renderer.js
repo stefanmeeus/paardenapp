@@ -21,44 +21,55 @@ export class Renderer {
     t.style.transition = "";
   });
 }
-
+// ✅ _switchToTab(id) — definitieve werkende versie
 _switchToTab(id) {
-  // defensive: dashboard bestaan check
   const dashboard = document.getElementById("dashboard");
-  if (dashboard) dashboard.style.display = "none";
+  const container = this.container || document.querySelector("#tab-container");
 
-  // Zorg dat container aanwezig is
-  if (!this.container) {
-    console.warn("⚠️ Renderer.container ontbreekt — controleer initialisatie.");
+  if (!dashboard || !container) {
+    console.warn("Renderer: dashboard of container niet gevonden");
     return;
   }
-  this.container.style.display = "block";
 
-  // Verberg andere tabs
+  // Laat dashboard zichtbaar — we willen dat niet verbergen
+  dashboard.style.display = "block";
+  container.style.display = "block";
+
+  // Verberg eerst alle tabs
   this._hideAllTabs();
 
-  // Haal tab op
+  // Zoek de tab die we willen tonen
   const tab = document.getElementById(id);
   if (!tab) {
-    console.warn(`⚠️ Tab met id "${id}" niet gevonden.`);
+    console.warn(`Renderer: Tab met id "${id}" niet gevonden.`);
     return;
   }
 
-  // Reset en forceer repaint voordat we animatie starten
+  // Toon de tab met fade-in effect
   tab.style.display = "block";
   tab.style.opacity = "0";
-  tab.style.transition = "none";
+  tab.style.transition = "opacity 260ms ease-in-out";
 
-  // Force browser reflow / repaint
-  // (read layout) — zorgt dat transition daarna wel getriggerd wordt
-  void tab.offsetWidth;
+  // force reflow
+  tab.offsetWidth;
 
-  // Start fade-in met nette transition
   requestAnimationFrame(() => {
-    tab.style.transition = "opacity 350ms ease-in-out";
-    tab.style.opacity = "1";
     tab.classList.add("active", "fade-in");
+    tab.style.opacity = "1";
   });
+
+  // Opruimen na animatie
+  setTimeout(() => {
+    tab.style.opacity = "";
+    tab.style.transition = "";
+  }, 350);
+
+  // Scroll/focus verbetering
+  try {
+    container.scrollTop = 0;
+    const firstFocusable = tab.querySelector("button, a, input, [tabindex]");
+    if (firstFocusable) firstFocusable.focus();
+  } catch (e) {}
 }
 
   showDashboard() {
@@ -162,13 +173,6 @@ async showPaarden() {
         <button id="nextPage" ${currentPage === totalPages ? "disabled" : ""}>▶</button>
       </div>
     `;
-    console.log("💡 Container bestaat nog?", !!document.getElementById("tab-paarden"));
-setTimeout(() => {
-  console.log("🔍 Na 1 seconde nog steeds:", document.getElementById("tab-paarden")?.innerHTML?.slice(0, 500));
-}, 1000);
-
-
-    console.log("✅ HTML ingevuld in container:", container.innerHTML.slice(0, 200));
 
     // 🔹 Buttons en events
     const backBtn = document.getElementById("backBtn");
