@@ -275,9 +275,10 @@ export class Renderer {
     });
   }
 
-// -------------------------------------------------------
-// STALLEN
-// -------------------------------------------------------
+  // -------------------------------------------------------
+  // Stallen
+  // -------------------------------------------------------
+
   showStallen() {
     this._switchToTab("tab-stallen");
 
@@ -447,7 +448,9 @@ export class Renderer {
     render();
   }
 
-  ////contacten///
+  // -------------------------------------------------------
+  // Contacten
+  // -------------------------------------------------------
  showContacten() {
   this._switchToTab("tab-contacten");
 
@@ -650,7 +653,9 @@ showContactDetails(contact) {
   });
 }
 
-/// voeding////
+  // -------------------------------------------------------
+  // Voeding
+  // -------------------------------------------------------
   showVoeding() {
     this._switchToTab("tab-voeding");
 
@@ -666,8 +671,135 @@ showContactDetails(contact) {
       this.showDashboard();
     });
   }
+  
+  // -------------------------------------------------------
+  // Medicatie
+  // -------------------------------------------------------
+ showMedicatie() {
+  this._switchToTab("tab-medicatie");
 
+  const medicatieLijst = loadData("medicatie") || [];
+  const paarden = loadData("paarden") || [];
 
- 
+  const actievePaarden = paarden.filter(p => p.actief !== false);
+  const vandaag = new Date().toISOString().split("T")[0];
+
+  const container = document.getElementById("tab-medicatie");
+
+  const paardenMetActieveMedicatie = actievePaarden.map(paard => {
+    const meds = medicatieLijst
+      .filter(m => String(m.paardId) === String(paard.id))
+      .filter(m => !m.eindDatum || m.eindDatum >= vandaag); // Alleen actieve
+
+    return meds.length ? { paard, meds } : null;
+  }).filter(Boolean);
+
+  const listHTML = paardenMetActieveMedicatie.length
+    ? `<div class="kaart-lijst">
+        ${paardenMetActieveMedicatie.map(({ paard, meds }) => `
+          <div class="card card-click" data-id="${paard.id}">
+            <h3>💊 ${paard.naam}</h3>
+            <ul>
+              ${meds.map(m => `
+                <li>
+                  <strong>${m.medicatie}</strong> — Start: ${m.startDatum}, Dosering: ${m.dosering}
+                </li>
+              `).join("")}
+            </ul>
+          </div>
+        `).join("")}
+      </div>`
+    : `<div class="empty-state">🚫 Geen actieve medicatie gevonden.</div>`;
+
+  container.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>💊 Medicatie</h2>
+    </div>
+
+    <div class="paarden-search-wrapper">
+      <button id="addBtn" class="btn-primary">+ Nieuwe Medicatie</button>
+    </div>
+
+    ${listHTML}
+  `;
+
+  // ⬅ Terug
+  document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+
+  // ➕ Toevoegen
+  document.getElementById("addBtn").addEventListener("click", () => {
+    this.modals.openMedicatieForm(null, () => this.showMedicatie());
+  });
+
+  // 📄 Kaart aanklikken = toon alle medicatie van paard
+  container.querySelectorAll(".card-click").forEach(card => {
+    const paardId = card.dataset.id;
+    const paard = paarden.find(p => String(p.id) === paardId);
+    if (paard) {
+      card.addEventListener("click", () => this.showMedicatieDetails(paard));
+    }
+  });
+}
+showMedicatieDetails(paard) {
+  const container = document.getElementById("tab-medicatie");
+  const medicatieLijst = loadData("medicatie") || [];
+
+  const meds = medicatieLijst.filter(m => String(m.paardId) === String(paard.id));
+
+  container.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>💊 Medicatie - ${paard.naam}</h2>
+    </div>
+
+    ${meds.length === 0
+      ? `<p>Geen medicaties voor dit paard.</p>`
+      : meds.map(m => `
+          <div class="card">
+            <h3>${m.medicatie}</h3>
+            <p><strong>Start:</strong> ${m.startDatum}</p>
+            <p><strong>Eind:</strong> ${m.eindDatum || "–"}</p>
+            <p><strong>Dosering:</strong> ${m.dosering}</p>
+            <p><strong>Frequentie:</strong> ${m.frequentie || "–"}</p>
+            <p><strong>Toediening:</strong> ${m.toediening || "–"}</p>
+            <p><strong>Voorgeschreven door:</strong> ${m.voorgeschrevenDoor || "–"}</p>
+            <p><strong>Opmerking:</strong> ${m.opmerking || "–"}</p>
+
+            <div class="card-actions">
+              <button class="btn-primary edit-btn" data-id="${m.id}">✏️ Bewerken</button>
+              <button class="btn-secondary delete-btn" data-id="${m.id}">🗑️ Verwijderen</button>
+            </div>
+          </div>
+        `).join("")}
+  `;
+
+  // ⬅ Terug
+  document.getElementById("backBtn").addEventListener("click", () => this.showMedicatie());
+
+  // ✏️ Bewerken
+  container.querySelectorAll(".edit-btn").forEach(btn => {
+    const id = parseInt(btn.dataset.id);
+    const item = medicatieLijst.find(m => m.id === id);
+    if (item) {
+      btn.addEventListener("click", () => {
+        this.modals.openMedicatieForm(item, () => this.showMedicatieDetails(paard));
+      });
+    }
+  });
+
+  // 🗑️ Verwijderen
+  container.querySelectorAll(".delete-btn").forEach(btn => {
+    const id = parseInt(btn.dataset.id);
+    btn.addEventListener("click", () => {
+      if (confirm("❗ Weet je zeker dat je deze medicatie wilt verwijderen?")) {
+        const nieuwLijst = medicatieLijst.filter(m => m.id !== id);
+        saveData("medicatie", nieuwLijst);
+        this.showMedicatieDetails(paard);
+      }
+    });
+  });
+}
+
 }
 

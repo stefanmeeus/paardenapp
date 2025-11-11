@@ -37,6 +37,11 @@ document.addEventListener("DOMContentLoaded", () => {
     renderer.showContacten();
   });
 
+  document.getElementById("tile-medicatie").addEventListener("click", () => {
+  this.showMedicatieZoek(); 
+});
+
+
   // 🔹 Startscherm tonen
   renderer.showDashboard();
 });

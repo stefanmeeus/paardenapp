@@ -474,5 +474,207 @@ export class ModalManager {
       refreshCallback?.();
     });
   }
+/* =====================================================
+ 🩺 FORMULIER MEDICATIEPLAN (bewerken + toevoegen)
+===================================================== */
+openMedicatieForm(medicatie = null, callback) {
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+
+  const paarden = loadData("paarden") || [];
+  const actievePaarden = paarden.filter(p => p.id);
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3>${medicatie ? "✏️ Medicatie bewerken" : "💊 Nieuwe Medicatie"}</h3>
+
+      <div id="formErrorBox" class="form-error-box" style="display:none;">
+        ❗ Controleer de invoer hieronder.
+      </div>
+
+      <label>Paard:
+        <select id="medPaardId">
+          <option value="">-- Kies een paard --</option>
+          ${actievePaarden.map(p => `
+            <option value="${p.id}">${p.naam || "Naamloos paard"}</option>
+          `).join("")}
+        </select>
+        <small class="error-text" id="errPaard"></small>
+      </label>
+
+      <label>Naam medicatie:
+        <input id="medNaam" type="text" placeholder="Bijv. Bute, AB-kuur..." />
+        <small class="error-text" id="errNaam"></small>
+      </label>
+
+      <label>Startdatum:
+        <input id="medStart" type="date" />
+        <small class="error-text" id="errStart"></small>
+      </label>
+
+      <label>Aantal dagen:
+        <input id="medAantalDagen" type="number" placeholder="Bijv. 5" />
+      </label>
+
+      <label>Einddatum:
+        <input id="medEind" type="date" />
+        <small class="error-text" id="errEind"></small>
+      </label>
+
+      <label>Dosering:
+        <input id="medDosering" type="text" placeholder="Bijv. 1 pil, 2x per dag" />
+      </label>
+
+      <label>Frequentie:
+        <input id="medFrequentie" type="text" placeholder="Bijv. Ochtend / Avond" />
+      </label>
+
+      <label>Toedieningswijze:
+        <input id="medToediening" type="text" placeholder="Bijv. Oraal, injectie..." />
+      </label>
+
+      <label>Voorgeschreven door:
+        <input id="medVoorgeschrevenDoor" type="text" placeholder="Naam dierenarts" />
+      </label>
+
+      <label>Opmerkingen:
+        <textarea id="medOpmerking" rows="3" placeholder="Extra info..."></textarea>
+      </label>
+
+      <div class="modal-buttons">
+        <button id="saveMedicatie" class="btn-primary">Opslaan</button>
+        <button id="closeModal" class="btn-secondary">Annuleer</button>
+      </div>
+    </div>
+  `;
+
+  // Extra stijlen injecteren (indien nog niet aanwezig)
+  const style = document.createElement("style");
+  style.textContent = `
+    .error-text {
+      color: #c00;
+      font-size: 0.85em;
+      min-height: 1em;
+      display: block;
+    }
+    .invalid {
+      border-color: #c00 !important;
+      background: #ffeaea !important;
+    }
+    .form-error-box {
+      background: #ffe0e0;
+      color: #a00;
+      border: 1px solid #a00;
+      padding: 10px;
+      border-radius: 4px;
+      margin-bottom: 10px;
+      font-weight: bold;
+    }
+  `;
+  document.head.appendChild(style);
+
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
+
+  // Prefill bij bewerken
+  if (medicatie) {
+    modal.querySelector("#medPaardId").value = medicatie.paardId ?? "";
+    modal.querySelector("#medNaam").value = medicatie.medicatie || "";
+    modal.querySelector("#medStart").value = medicatie.startDatum || "";
+    modal.querySelector("#medEind").value = medicatie.eindDatum || "";
+    modal.querySelector("#medDosering").value = medicatie.dosering || "";
+    modal.querySelector("#medFrequentie").value = medicatie.frequentie || "";
+    modal.querySelector("#medToediening").value = medicatie.toediening || "";
+    modal.querySelector("#medVoorgeschrevenDoor").value = medicatie.voorgeschrevenDoor || "";
+    modal.querySelector("#medOpmerking").value = medicatie.opmerking || "";
+  }
+
+  // Automatisch einddatum berekenen
+  modal.querySelector("#medAantalDagen").addEventListener("input", () => {
+    const start = modal.querySelector("#medStart").value;
+    const dagen = parseInt(modal.querySelector("#medAantalDagen").value);
+    if (start && dagen > 0) {
+      const startDate = new Date(start);
+      startDate.setDate(startDate.getDate() + dagen);
+      modal.querySelector("#medEind").value = startDate.toISOString().split("T")[0];
+    }
+  });
+
+  modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+  modal.querySelector("#saveMedicatie").addEventListener("click", () => {
+    // Reset fouten
+    modal.querySelector("#formErrorBox").style.display = "none";
+    modal.querySelectorAll(".error-text").forEach(e => e.textContent = "");
+    modal.querySelectorAll("input, select").forEach(i => i.classList.remove("invalid"));
+
+    const paardId = modal.querySelector("#medPaardId").value;
+    const paard = actievePaarden.find(p => String(p.id) === paardId);
+    const naam = modal.querySelector("#medNaam").value.trim();
+    const startDatum = modal.querySelector("#medStart").value;
+    const eindDatum = modal.querySelector("#medEind").value;
+    const dosering = modal.querySelector("#medDosering").value.trim();
+    const frequentie = modal.querySelector("#medFrequentie").value.trim();
+    const toediening = modal.querySelector("#medToediening").value.trim();
+    const voorgeschrevenDoor = modal.querySelector("#medVoorgeschrevenDoor").value.trim();
+    const opmerking = modal.querySelector("#medOpmerking").value.trim();
+
+    const vandaag = new Date().toISOString().split("T")[0];
+    let fouten = [];
+
+    if (!paardId) {
+      fouten.push("Kies een paard.");
+      modal.querySelector("#errPaard").textContent = "Kies een paard.";
+      modal.querySelector("#medPaardId").classList.add("invalid");
+    }
+
+    if (!naam) {
+      fouten.push("Vul medicatienaam in.");
+      modal.querySelector("#errNaam").textContent = "Vul medicatienaam in.";
+      modal.querySelector("#medNaam").classList.add("invalid");
+    }
+
+    if (!startDatum) {
+      fouten.push("Vul startdatum in.");
+      modal.querySelector("#errStart").textContent = "Vul startdatum in.";
+      modal.querySelector("#medStart").classList.add("invalid");
+    }
+
+    if (eindDatum && eindDatum < vandaag) {
+      fouten.push("Einddatum ligt in het verleden.");
+      modal.querySelector("#errEind").textContent = "Einddatum ligt in verleden.";
+      modal.querySelector("#medEind").classList.add("invalid");
+    }
+
+    if (fouten.length > 0) {
+      modal.querySelector("#formErrorBox").style.display = "block";
+      return;
+    }
+
+    // ✅ Opslaan
+    const nieuw = {
+      id: medicatie?.id || Date.now(),
+      paardId: parseInt(paardId),
+      paardNaam: paard?.naam || "Onbekend",
+      medicatie: naam,
+      startDatum,
+      eindDatum,
+      dosering,
+      frequentie,
+      toediening,
+      voorgeschrevenDoor,
+      opmerking
+    };
+
+    const lijst = loadData("medicatie") || [];
+    const index = lijst.findIndex(m => m.id === nieuw.id);
+    if (index > -1) lijst[index] = nieuw;
+    else lijst.push(nieuw);
+
+    saveData("medicatie", lijst);
+    modal.remove();
+    callback?.();
+  });
+}
 
 }
