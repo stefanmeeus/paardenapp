@@ -548,7 +548,7 @@ openMedicatieForm(medicatie = null, callback) {
     </div>
   `;
 
-  // Extra stijlen injecteren (indien nog niet aanwezig)
+  // Extra stijlen injecteren 
   const style = document.createElement("style");
   style.textContent = `
     .error-text {
@@ -672,6 +672,97 @@ openMedicatieForm(medicatie = null, callback) {
     else lijst.push(nieuw);
 
     saveData("medicatie", lijst);
+    modal.remove();
+    callback?.();
+  });
+}
+openVoedingForm(voeding = null, callback, isStandaard = false) {
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+
+  const paarden = loadData("paarden") || [];
+  const bestaandeVoedingen = loadData("voeding") || [];
+  const gebruiktePaarden = bestaandeVoedingen.filter(v => v.paardId && v.id !== voeding?.id).map(v => String(v.paardId));
+
+  // Filter beschikbare paarden voor dropdown
+  const beschikbarePaarden = paarden.filter(p => !gebruiktePaarden.includes(String(p.id)));
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <h3>${voeding ? "✏️ Voeding bewerken" : "🍽️ Nieuwe voeding"} ${isStandaard ? "(Standaard)" : ""}</h3>
+      
+      <div id="formError" class="form-error" style="display: none;">
+        ❗ Controleer de invoer hieronder.
+      </div>
+
+      ${!isStandaard ? `
+        <label>Paard:
+          <select id="voedingPaard">
+            <option value="">-- Selecteer paard --</option>
+            ${paarden.map(p => `
+              <option value="${p.id}" ${voeding?.paardId == p.id ? "selected" : ""} ${gebruiktePaarden.includes(String(p.id)) && voeding?.paardId != p.id ? "disabled" : ""}>
+                ${p.naam} ${gebruiktePaarden.includes(String(p.id)) && voeding?.paardId != p.id ? "(al voeding)" : ""}
+              </option>
+            `).join("")}
+          </select>
+        </label>
+      ` : ""}
+
+      <h4>🕒 Voeding</h4>
+      <label>Ochtend: <input id="vOchtend" type="text" value="${voeding?.ochtend || ""}" /></label>
+      <label>Middag: <input id="vMiddag" type="text" value="${voeding?.middag || ""}" /></label>
+      <label>Avond: <input id="vAvond" type="text" value="${voeding?.avond || ""}" /></label>
+
+      <h4>💊 Supplementen</h4>
+      <label>Ochtend: <input id="sOchtend" type="text" value="${voeding?.supplementen?.ochtend || ""}" /></label>
+      <label>Middag: <input id="sMiddag" type="text" value="${voeding?.supplementen?.middag || ""}" /></label>
+      <label>Avond: <input id="sAvond" type="text" value="${voeding?.supplementen?.avond || ""}" /></label>
+
+      <div class="modal-buttons">
+        <button id="saveVoeding" class="btn-primary">Opslaan</button>
+        <button id="closeModal" class="btn-secondary">Annuleer</button>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
+
+  // ❌ Annuleren
+  modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+  // 💾 Opslaan
+  modal.querySelector("#saveVoeding").addEventListener("click", () => {
+    const paardId = isStandaard ? "" : modal.querySelector("#voedingPaard").value;
+
+    const nieuweVoeding = {
+      id: voeding?.id || Date.now().toString(),
+      paardId: paardId || "",
+      ochtend: modal.querySelector("#vOchtend").value.trim(),
+      middag: modal.querySelector("#vMiddag").value.trim(),
+      avond: modal.querySelector("#vAvond").value.trim(),
+      supplementen: {
+        ochtend: modal.querySelector("#sOchtend").value.trim(),
+        middag: modal.querySelector("#sMiddag").value.trim(),
+        avond: modal.querySelector("#sAvond").value.trim()
+      }
+    };
+
+    // ✅ Validatie
+    const formError = modal.querySelector("#formError");
+    if (!isStandaard && !paardId) {
+      formError.style.display = "block";
+      return;
+    } else {
+      formError.style.display = "none";
+    }
+
+    const lijst = loadData("voeding") || [];
+    const index = lijst.findIndex(v => v.id === nieuweVoeding.id);
+    if (index > -1) lijst[index] = nieuweVoeding;
+    else lijst.push(nieuweVoeding);
+
+    saveData("voeding", lijst);
     modal.remove();
     callback?.();
   });

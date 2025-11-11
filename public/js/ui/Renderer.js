@@ -657,21 +657,187 @@ showContactDetails(contact) {
   // Voeding
   // -------------------------------------------------------
   showVoeding() {
-    this._switchToTab("tab-voeding");
+  this._switchToTab("tab-voeding");
 
-    document.getElementById("tab-voeding").innerHTML = `
-      <div class="tab-header">
-        <button class="back-btn" id="backBtn">⬅ Terug</button>
-        <h2>📁 Voeding</h2>
+  const container = document.getElementById("tab-voeding");
+  const voedingLijst = loadData("voeding") || [];
+  const paarden = loadData("paarden") || [];
+
+  const standaardVoeding = voedingLijst.find(v => !v.paardId);
+  const individueleVoedingen = voedingLijst.filter(v => v.paardId);
+
+  const getPaardNaam = (id) => {
+    const paard = paarden.find(p => String(p.id) === String(id));
+    return paard?.naam || "❓ Onbekend paard";
+  };
+
+  const renderVoedingBlok = (titel, voeding) => `
+    <div class="voeding-blok">
+      <h3>${titel}</h3>
+      <p><strong>Ochtend:</strong> ${voeding.ochtend || "-"}</p>
+      <p><strong>Middag:</strong> ${voeding.middag || "-"}</p>
+      <p><strong>Avond:</strong> ${voeding.avond || "-"}</p>
+      <p><strong>Supplementen:</strong></p>
+      <ul>
+        <li><strong>Ochtend:</strong> ${voeding.supplementen?.ochtend || "-"}</li>
+        <li><strong>Middag:</strong> ${voeding.supplementen?.middag || "-"}</li>
+        <li><strong>Avond:</strong> ${voeding.supplementen?.avond || "-"}</li>
+      </ul>
+      <button class="btn-secondary edit-voeding-btn" data-id="${voeding.id}">✏️ Bewerken</button>
+    </div>
+  `;
+
+  container.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>🍽️ Voedingsschema’s</h2>
+    </div>
+
+    ${standaardVoeding ? renderVoedingBlok("🌐 Standaard voeding", standaardVoeding) : `
+      <div class="empty-state">
+        ⚠️ Geen standaard voeding ingesteld.
+        <button class="btn-primary" id="addStandaardVoeding">+ Voeg standaard voeding toe</button>
       </div>
-      <p>Voedingsschema’s volgen...</p>
-    `;
+    `}
 
-    document.getElementById("backBtn").addEventListener("click", () => {
-      this.showDashboard();
+    <div class="voeding-paarden-lijst">
+      <h3>🐴 Individuele paarden</h3>
+      ${individueleVoedingen.length
+        ? individueleVoedingen.map(v =>
+            renderVoedingBlok(getPaardNaam(v.paardId), v)
+          ).join("")
+        : `<p>Geen individuele voedingsschema’s.</p>`
+      }
+    </div>
+
+    <div class="voeding-acties">
+      <button class="btn-primary" id="addIndividueleVoeding">+ Voeg paard-specifieke voeding toe</button>
+    </div>
+  `;
+
+  // 🔙 Terug
+  document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+
+  // ➕ Standaard voeding
+  const standaardBtn = document.getElementById("addStandaardVoeding");
+  if (standaardBtn) {
+    standaardBtn.addEventListener("click", () => {
+      this.modals.openVoedingForm(null, () => this.showVoeding(), true); // isStandaard = true
     });
   }
-  
+
+  // ➕ Individueel
+  document.getElementById("addIndividueleVoeding").addEventListener("click", () => {
+    this.modals.openVoedingForm(null, () => this.showVoeding(), false); // isStandaard = false
+  });
+
+  // ✏️ Bewerken
+  container.querySelectorAll(".edit-voeding-btn").forEach(btn => {
+    const id = btn.dataset.id;
+    const item = [...individueleVoedingen, standaardVoeding].find(v => v.id === id);
+    if (item) {
+      btn.addEventListener("click", () => {
+        const isStandaard = !item.paardId;
+        this.modals.openVoedingForm(item, () => this.showVoeding(), isStandaard);
+      });
+    }
+  });
+}
+showVoedingDetails(voeding) {
+  const container = document.getElementById("tab-voeding");
+
+  const paard = loadData("paarden")?.find(p => String(p.id) === String(voeding.paardId));
+
+  container.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>🍽️ Voeding - ${paard?.naam || "Onbekend paard"}</h2>
+    </div>
+
+    <div class="card-details">
+      <h3>🕒 Voeding</h3>
+      <p><strong>Ochtend:</strong> ${voeding.ochtend || "-"}</p>
+      <p><strong>Middag:</strong> ${voeding.middag || "-"}</p>
+      <p><strong>Avond:</strong> ${voeding.avond || "-"}</p>
+
+      <h3>💊 Supplementen</h3>
+      <p><strong>Ochtend:</strong> ${voeding.supplementen?.ochtend || "-"}</p>
+      <p><strong>Middag:</strong> ${voeding.supplementen?.middag || "-"}</p>
+      <p><strong>Avond:</strong> ${voeding.supplementen?.avond || "-"}</p>
+    </div>
+
+    <div class="card-actions">
+      <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
+      <button id="deleteBtn" class="btn-secondary">🗑️ Verwijderen</button>
+    </div>
+  `;
+
+  document.getElementById("backBtn").addEventListener("click", () => this.showVoeding());
+
+  document.getElementById("editBtn").addEventListener("click", () => {
+    this.modals.openVoedingForm(voeding, () => this.showVoeding());
+  });
+
+  document.getElementById("deleteBtn").addEventListener("click", () => {
+    if (confirm(`❗ Weet je zeker dat je de voeding voor ${paard?.naam} wilt verwijderen?`)) {
+      const lijst = loadData("voeding") || [];
+      const nieuw = lijst.filter(v => v.id !== voeding.id);
+      saveData("voeding", nieuw);
+      this.showVoeding();
+    }
+  });
+}
+showStandaardVoeding() {
+  const container = document.getElementById("tab-voeding");
+  const voedingLijst = loadData("voeding") || [];
+  const standaard = voedingLijst.find(v => !v.paardId);
+
+  container.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>🍽️ Standaard Voeding</h2>
+    </div>
+
+    ${standaard ? `
+      <div class="card-details">
+        <h3>🕒 Voeding</h3>
+        <p><strong>Ochtend:</strong> ${standaard.ochtend || "-"}</p>
+        <p><strong>Middag:</strong> ${standaard.middag || "-"}</p>
+        <p><strong>Avond:</strong> ${standaard.avond || "-"}</p>
+
+        <h3>💊 Supplementen</h3>
+        <p><strong>Ochtend:</strong> ${standaard.supplementen?.ochtend || "-"}</p>
+        <p><strong>Middag:</strong> ${standaard.supplementen?.middag || "-"}</p>
+        <p><strong>Avond:</strong> ${standaard.supplementen?.avond || "-"}</p>
+      </div>
+
+      <div class="card-actions">
+        <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
+      </div>
+    ` : `
+      <div class="empty-state">
+        🚫 Nog geen standaard voeding ingesteld.
+      </div>
+
+      <div class="card-actions">
+        <button id="addBtn" class="btn-primary">+ Nieuwe Standaard Voeding</button>
+      </div>
+    `}
+  `;
+
+  document.getElementById("backBtn").addEventListener("click", () => this.showVoeding());
+
+  if (standaard) {
+    document.getElementById("editBtn").addEventListener("click", () => {
+      this.modals.openVoedingForm(standaard, () => this.showStandaardVoeding(), true);
+    });
+  } else {
+    document.getElementById("addBtn").addEventListener("click", () => {
+      this.modals.openVoedingForm(null, () => this.showStandaardVoeding(), true);
+    });
+  }
+}
+
   // -------------------------------------------------------
   // Medicatie
   // -------------------------------------------------------
@@ -800,6 +966,133 @@ showMedicatieDetails(paard) {
     });
   });
 }
+    // -------------------------------------------------------
+   // Voederen
+  // -------------------------------------------------------
+showVoederen() {
+  this._switchToTab("tab-voederen");
 
+  const locaties = loadData("locaties") || [];
+  const stallen = loadData("stallen") || [];
+  const paarden = loadData("paarden") || [];
+
+  const voederenList = document.getElementById("voederenList");
+
+  // Groepeer stallen per locatie met gekoppelde paarden
+  const locatieKaarten = locaties
+    .map(loc => {
+      const stallenInLocatie = stallen.filter(s => s.locatieId === loc.id && paarden.some(p => p.id === s.paardId));
+      if (stallenInLocatie.length === 0) return null;
+
+      return `
+        <div class="card locatie-card" data-id="${loc.id}">
+          <h3>${loc.naam}</h3>
+          <p>${stallenInLocatie.length} stal(len) met paarden</p>
+        </div>
+      `;
+    })
+    .filter(Boolean)
+    .join("");
+
+  voederenList.innerHTML = locatieKaarten || `<div class="empty-state">Geen locaties met paarden gevonden.</div>`;
+
+  // Klikken op locatiekaart → toon stallen met paarden
+  document.querySelectorAll(".locatie-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const locatieId = card.dataset.id;
+      this.showVoederenStallen(locatieId);
+    });
+  });
+
+  document.getElementById("back-voederen").addEventListener("click", () => this.showDashboard());
+}
+showVoederenStallen(locatieId) {
+  const locaties = loadData("locaties") || [];
+  const stallen = loadData("stallen") || [];
+  const paarden = loadData("paarden") || [];
+
+  const locatie = locaties.find(l => l.id === locatieId);
+  const stallenInLoc = stallen.filter(s => s.locatieId === locatieId && s.paardId);
+  const voederenList = document.getElementById("voederenList");
+
+  const kaarten = stallenInLoc
+    .map(stal => {
+      const paard = paarden.find(p => p.id === stal.paardId);
+      return `
+        <div class="card stal-card" data-id="${stal.id}">
+          <h3>Stal ${stal.stalnr}</h3>
+          <p>${paard ? paard.naam : "Geen paard"}</p>
+        </div>
+      `;
+    })
+    .join("");
+
+  voederenList.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backToLocaties">⬅ Terug</button>
+      <h2>${locatie.naam}</h2>
+    </div>
+    <div class="kaart-lijst">${kaarten}</div>
+  `;
+
+  document.getElementById("backToLocaties").addEventListener("click", () => this.showVoederen());
+
+  document.querySelectorAll(".stal-card").forEach(card => {
+    card.addEventListener("click", () => {
+      const stalId = parseInt(card.dataset.id);
+      const stal = stallen.find(s => s.id === stalId);
+      const paard = paarden.find(p => p.id === stal.paardId);
+      if (paard) this.showVoederenDetails(paard);
+    });
+  });
+}
+showVoederenDetails(paard) {
+  const voederingen = loadData("voeding") || [];
+  const medicaties = loadData("medicatie") || [];
+
+  const standaardVoeding = voederingen.find(v => !v.paardId);
+  const paardVoeding = voederingen.find(v => v.paardId === paard.id) || standaardVoeding;
+
+  const actieveMedicatie = medicaties.filter(m =>
+    m.paardId === paard.id &&
+    (!m.eindDatum || new Date(m.eindDatum) >= new Date())
+  );
+
+  const voederenList = document.getElementById("voederenList");
+
+  const medicatieHTML = actieveMedicatie.length
+    ? actieveMedicatie.map(m => `
+        <div class="mini-card">
+          <strong>${m.medicatie}</strong><br />
+          ${m.dosering} – ${m.frequentie}
+        </div>
+      `).join("")
+    : "<p>Geen actieve medicatie</p>";
+
+  voederenList.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backToStallen">⬅ Terug</button>
+      <h2>🐴 ${paard.naam}</h2>
+    </div>
+
+    <div class="card">
+      <h3>🍽️ Voeding</h3>
+      <p><strong>Ochtend:</strong> ${paardVoeding.ochtend || "–"}</p>
+      <p><strong>Middag:</strong> ${paardVoeding.middag || "–"}</p>
+      <p><strong>Avond:</strong> ${paardVoeding.avond || "–"}</p>
+
+      <h4>💊 Medicatie</h4>
+      <div class="kaart-lijst">
+        ${medicatieHTML}
+      </div>
+    </div>
+  `;
+
+  document.getElementById("backToStallen").addEventListener("click", () => {
+    const stal = (loadData("stallen") || []).find(s => s.paardId === paard.id);
+    if (stal) this.showVoederenStallen(stal.locatieId);
+    else this.showVoederen(); // fallback
+  });
+}
 }
 

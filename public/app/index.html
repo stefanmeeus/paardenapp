@@ -28,6 +28,10 @@
           <img src="../img/icons/contact.png" alt="Contacten" />
           <span>Contacten</span>
         </div>
+        <div class="tile" data-tab="voederen">
+          <img src="../img/icons/voederen.png" alt="Voederen" />
+          <span>Voederen</span>
+        </div>
         <div class="tile" data-tab="voeding">
           <img src="../img/icons/Voeding.png" alt="Voeding" />
           <span>Voeding</span>
@@ -192,7 +196,16 @@
           <!-- Dynamisch gevuld -->
         </div>
       </div>
-
+      <!-- voederen -->
+    <div id="tab-voederen" class="tab-content">
+      <div class="tab-header">
+        <button class="back-btn" id="back-voederen">⬅ Terug</button>
+       <h2>🐴 Voederen</h2>
+      </div>
+    <div id="voederenList">
+    <!-- Wordt gevuld met stal-locaties -->
+  </div>
+</div>
     </section>
   </main>
 
@@ -211,6 +224,7 @@
       vaccinatie: () => renderer._switchToTab("tab-vaccinatie"),
       contracten: () => renderer._switchToTab("tab-contracten"),
       trainingen: () => renderer._switchToTab("tab-trainingen"),
+      voederen: () => renderer.showVoederen(),
     };
 
     document.querySelectorAll(".tile").forEach(tile => {
