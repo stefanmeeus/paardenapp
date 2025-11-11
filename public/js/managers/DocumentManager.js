@@ -2,10 +2,10 @@ import { loadData, saveData } from "../storage.js";
 
 export class DocumentManager {
   constructor(entityType, entityId) {
-    this.entityType = entityType; // vb: 'paard'
+    this.entityType = entityType; // vb: 'paard' of 'contact'
     this.entityId = entityId;
 
-    this.entityList = loadData(`${entityType}en`) || []; // bvb: 'paarden'
+    this.entityList = loadData(`${entityType}en`) || []; // bvb: 'paarden' of 'contacten'
     this.entity = this.entityList.find(e => e.id === entityId);
 
     if (!this.entity) {
@@ -16,6 +16,7 @@ export class DocumentManager {
     // Initialiseer documenten indien niet aanwezig
     if (!this.entity.paspoort) this.entity.paspoort = null;
     if (!this.entity.verslagen) this.entity.verslagen = [];
+    if (!this.entity.contract) this.entity.contract = []; // ✅ toegevoegd
   }
 
   _saveEntity() {
@@ -34,6 +35,10 @@ export class DocumentManager {
     return (this.entity?.verslagen || []).sort((a, b) => b.date.localeCompare(a.date));
   }
 
+  getContracten() {
+    return (this.entity?.contract || []).sort((a, b) => b.date.localeCompare(a.date)); // ✅ nieuw
+  }
+
   addDocument(type, fileObj) {
     const entry = {
       id: Date.now(),
@@ -46,6 +51,8 @@ export class DocumentManager {
       this.entity.paspoort = entry;
     } else if (type === "verslag") {
       this.entity.verslagen.push(entry);
+    } else if (type === "contract") {
+      this.entity.contract.push(entry); // ✅ toegevoegd
     }
 
     this._saveEntity();
@@ -56,6 +63,8 @@ export class DocumentManager {
       this.entity.paspoort = null;
     } else if (type === "verslag") {
       this.entity.verslagen = this.entity.verslagen.filter(doc => doc.id !== id);
+    } else if (type === "contract") {
+      this.entity.contract = this.entity.contract.filter(doc => doc.id !== id); // ✅ toegevoegd
     }
 
     this._saveEntity();
@@ -89,8 +98,9 @@ export class DocumentManager {
         list.innerHTML = `<li>${doc.name} <button data-id="${doc.id}" class="remove-btn">🗑️</button></li>`;
       }
 
-      if (type === "verslag") {
-        this.getVerslagen().forEach(doc => {
+      if (type === "verslag" || type === "contract") { // ✅ uitgebreid
+        const docList = type === "verslag" ? this.getVerslagen() : this.getContracten();
+        docList.forEach(doc => {
           const li = document.createElement("li");
           li.innerHTML = `${doc.name} <button data-id="${doc.id}" class="remove-btn">🗑️</button>`;
           list.appendChild(li);

@@ -446,6 +446,210 @@ export class Renderer {
 
     render();
   }
+
+  ////contacten///
+ showContacten() {
+  this._switchToTab("tab-contacten");
+
+  let contacten = loadData("contacten") || [];
+  let currentPage = 1;
+  let pageSize = 4;
+  let searchTerm = "";
+  let sortAsc = true;
+
+  const container = document.getElementById("tab-contacten");
+
+  const render = () => {
+    const filtered = contacten
+      .filter(c => `${c.Voornaam} ${c.Achternaam}`.toLowerCase().includes(searchTerm.toLowerCase()))
+      .sort((a, b) =>
+        sortAsc ? a.Voornaam.localeCompare(b.Voornaam) : b.Voornaam.localeCompare(a.Voornaam)
+      );
+
+    const totalPages = Math.ceil(filtered.length / pageSize);
+    const offset = (currentPage - 1) * pageSize;
+    const pageItems = filtered.slice(offset, offset + pageSize);
+
+    const listHTML = pageItems.length
+      ? `<div class="contact-grid">
+          ${pageItems.map(c => `
+            <div class="card contact-card" data-id="${c.id}">
+              <h3>${c.Voornaam} ${c.Achternaam}</h3>
+              <p><strong>Email:</strong> ${c.Email}</p>
+              <p><strong>Telefoon:</strong> ${c.Telefoon}</p>
+              <p><strong>Rol:</strong> ${c.rol}</p>
+            </div>
+          `).join("")}
+        </div>`
+      : `<div class="empty-state">🚫 Geen contacten gevonden.</div>`;
+
+    container.innerHTML = `
+      <div class="tab-header">
+        <button class="back-btn" id="backBtn">⬅ Terug</button>
+        <h2>📇 Contacten</h2>
+      </div>
+
+      <div class="contacten-search-wrapper">
+        <input type="text" id="searchInput" class="search-input" placeholder="Zoek op voornaam of achternaam..." value="${searchTerm}" />
+        
+        <div class="page-size-wrapper">
+          <label for="pageSizeSelect">Per pagina:</label>
+          <select id="pageSizeSelect">
+            ${[2, 4, 6, 10].map(n => `<option value="${n}" ${n === pageSize ? "selected" : ""}>${n}</option>`).join("")}
+          </select>
+        </div>
+
+        <button id="sortBtn" class="btn-secondary">Sorteer: ${sortAsc ? "A → Z" : "Z → A"}</button>
+        <button id="exportBtn" class="btn-secondary">📤 Exporteer</button>
+        <button id="downloadTemplate" class="btn-secondary">📄 Sjabloon</button>
+        <label class="btn-secondary" style="cursor: pointer;">
+          📥 Importeren
+          <input type="file" id="importInput" accept=".xlsx,.xls" style="display: none;" />
+        </label>
+        <button id="addContact" class="btn-primary">+ Nieuw Contact</button>
+      </div>
+
+      ${listHTML}
+
+      <div class="pagination">
+        <button id="prevPage" ${currentPage === 1 ? "disabled" : ""}>◀</button>
+        <span>Pagina ${currentPage} / ${totalPages || 1}</span>
+        <button id="nextPage" ${currentPage === totalPages || totalPages === 0 ? "disabled" : ""}>▶</button>
+      </div>
+    `;
+
+    document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+    document.getElementById("addContact").addEventListener("click", () => this.modals.openContactForm(null, () => this.showContacten()));
+    document.getElementById("exportBtn").addEventListener("click", () => DataExchange.exportContactenToExcel());
+    document.getElementById("downloadTemplate").addEventListener("click", () => DataExchange.downloadContactenTemplate());
+
+    document.getElementById("importInput").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await DataExchange.importContactenFromExcel(file, () => this.showContacten());
+      }
+    });
+
+    container.querySelectorAll(".contact-card").forEach(card => {
+      const id = parseInt(card.dataset.id);
+      const contact = contacten.find(c => c.id === id);
+      if (contact) {
+        card.addEventListener("click", () => this.showContactDetails(contact));
+      }
+    });
+
+    document.getElementById("searchInput").addEventListener("input", e => {
+      searchTerm = e.target.value;
+      currentPage = 1;
+      render();
+    });
+
+    document.getElementById("pageSizeSelect").addEventListener("change", e => {
+      pageSize = parseInt(e.target.value);
+      currentPage = 1;
+      render();
+    });
+
+    document.getElementById("sortBtn").addEventListener("click", () => {
+      sortAsc = !sortAsc;
+      render();
+    });
+
+    document.getElementById("prevPage").addEventListener("click", () => {
+      if (currentPage > 1) {
+        currentPage--;
+        render();
+      }
+    });
+
+    document.getElementById("nextPage").addEventListener("click", () => {
+      if (currentPage < totalPages) {
+        currentPage++;
+        render();
+      }
+    });
+  };
+
+  render();
+}
+
+showContactDetails(contact) {
+  const tab = document.getElementById("tab-contacten");
+
+  tab.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>👤 ${contact.Voornaam} ${contact.Achternaam}</h2>
+    </div>
+
+    <div class="card-details">
+      <p><strong>Voornaam:</strong> ${contact.Voornaam}</p>
+      <p><strong>Achternaam:</strong> ${contact.Achternaam}</p>
+      <p><strong>Telefoon:</strong> ${contact.Telefoon}</p>
+      <p><strong>Email:</strong> ${contact.Email}</p>
+      <p><strong>Adres:</strong> ${contact.Adres}</p>
+      <p><strong>Rol:</strong> ${contact.rol}</p>
+      <p><strong>Paardnaam:</strong> ${contact.Paardnaam}</p>
+      <p><strong>Klant-ID:</strong> ${contact.klant_ID}</p>
+    </div>
+
+    <div class="card-actions">
+      <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
+      <button id="deleteBtn" class="btn-secondary">🗑️ Verwijderen</button>
+    </div>
+
+    <div class="card-docs">
+      <h3>📁 Contracten</h3>
+      <ul>
+        ${
+          contact.contract && contact.contract.length
+            ? contact.contract.map(doc => `<li><a href="${doc.data}" target="_blank">${doc.name}</a></li>`).join("")
+            : "<li>Geen contracten beschikbaar</li>"
+        }
+      </ul>
+    </div>
+
+    <div class="document-section">
+      <h3>📂 Upload nieuwe contracten</h3>
+      <div class="upload-group">
+        <h4>📝 Contracten (meerdere bestanden)</h4>
+        <div id="contractUpload"></div>
+        <p class="upload-help">Toegestaan: PDF, JPG, PNG</p>
+      </div>
+    </div>
+  `;
+
+  // 🔙 Terugknop
+  document.getElementById("backBtn").addEventListener("click", () => this.showContacten());
+
+  // ✏️ Bewerken
+  document.getElementById("editBtn").addEventListener("click", () => {
+    this.modals.openContactForm(contact, () => this.showContacten());
+  });
+
+  // 🗑️ Verwijderen
+  document.getElementById("deleteBtn").addEventListener("click", () => {
+    if (confirm(`❗ Weet je zeker dat je ${contact.Voornaam} ${contact.Achternaam} wilt verwijderen?`)) {
+      const contacten = loadData("contacten") || [];
+      const nieuwLijst = contacten.filter(c => c.id !== contact.id);
+      saveData("contacten", nieuwLijst);
+      this.showContacten();
+    }
+  });
+
+  // 📂 Upload contracten
+  const docMgr = new DocumentManager("contact", contact.id);
+
+  docMgr.renderUploadUI(document.getElementById("contractUpload"), {
+    type: "contract",
+    multiple: true,
+    onUploadComplete: () => {
+      const updated = loadData("contacten").find(c => c.id === contact.id);
+      this.showContactDetails(updated);
+    }
+  });
+}
+
 /// voeding////
   showVoeding() {
     this._switchToTab("tab-voeding");
@@ -462,22 +666,7 @@ export class Renderer {
       this.showDashboard();
     });
   }
-////contacten///
-  showContacten() {
-    this._switchToTab("tab-contacten");
 
-    document.getElementById("tab-contacten").innerHTML = `
-      <div class="tab-header">
-        <button class="back-btn" id="backBtn">⬅ Terug</button>
-        <h2>📁 Contacten</h2>
-      </div>
-      <p>Contactpersonen volgen...</p>
-    `;
-
-    document.getElementById("backBtn").addEventListener("click", () => {
-      this.showDashboard();
-    });
-  }
 
  
 }

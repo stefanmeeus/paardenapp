@@ -360,4 +360,119 @@ export class ModalManager {
     });
   }
 
+  /* =====================================================
+   📇 FORMULIER CONTACT
+  ===================================================== */
+  openContactForm(contact = null, refreshCallback) {
+    const modal = document.createElement("div");
+    modal.classList.add("modal");
+
+    modal.innerHTML = `
+      <div class="modal-content">
+        <h3>${contact ? "✏️ Contact bewerken" : "Nieuw Contact"}</h3>
+
+        <label>Voornaam: <input id="voornaam" type="text" /></label>
+        <label>Achternaam: <input id="achternaam" type="text" /></label>
+        <label>Telefoon: <input id="telefoon" type="text" /></label>
+        <label>Email: <input id="email" type="email" /></label>
+        <label>Straat: <input id="straat" type="text" /></label>
+        <label>Huisnummer: <input id="huisnummer" type="text" /></label>
+        <label>Postcode: <input id="postcode" type="text" /></label>
+        <label>Gemeente: <input id="gemeente" type="text" /></label>
+        <label>Land: <input id="land" type="text" /></label>
+        <label>Rol: <input id="rol" type="text" /></label>
+        <label>Paardnaam: <input id="paardnaam" type="text" /></label>
+
+        <h4>📁 Contracten</h4>
+        <div id="contractUpload" class="upload-zone"></div>
+        <p class="upload-help">Sleep contracten hier (PDF, JPG, PNG)</p>
+
+        <div class="modal-buttons">
+          <button id="saveContact">Opslaan</button>
+          <button id="closeModal">Annuleer</button>
+        </div>
+      </div>
+    `;
+
+    document.body.appendChild(modal);
+    modal.style.display = "flex";
+
+    if (contact) {
+      modal.querySelector("#voornaam").value = contact.Voornaam || "";
+      modal.querySelector("#achternaam").value = contact.Achternaam || "";
+      modal.querySelector("#telefoon").value = contact.Telefoon || "";
+      modal.querySelector("#email").value = contact.Email || "";
+      modal.querySelector("#adres").value = contact.Adres || "";
+      modal.querySelector("#rol").value = contact.rol || "";
+      modal.querySelector("#paardnaam").value = contact.Paardnaam || "";
+    }
+
+    let gekozenContracten = contact?.contract || [];
+    const uploader = new UploadManager();
+
+    uploader.createDropzone("contractUpload", {
+      multiple: true,
+      onFilesSelected: (files) => {
+        gekozenContracten = [];
+        const fileReaders = [];
+
+        Array.from(files).forEach(file => {
+          const reader = new FileReader();
+          const promise = new Promise(resolve => {
+            reader.onload = e => {
+              gekozenContracten.push({
+                naam: file.name,
+                type: file.type,
+                data: e.target.result
+              });
+              resolve();
+            };
+          });
+          reader.readAsDataURL(file);
+          fileReaders.push(promise);
+        });
+
+        Promise.all(fileReaders).then(() => {
+          console.log("✅ Alle contracten ingelezen");
+        });
+      }
+    });
+
+    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+    modal.querySelector("#saveContact").addEventListener("click", () => {
+      const nieuwContact = {
+        id: contact?.id || Date.now(),
+        klant_ID: contact?.klant_ID || Date.now(),
+        Voornaam: modal.querySelector("#voornaam").value.trim(),
+        Achternaam: modal.querySelector("#achternaam").value.trim(),
+        Telefoon: modal.querySelector("#telefoon").value.trim(),
+        Email: modal.querySelector("#email").value.trim(),
+        Straat: modal.querySelector("#straat").value.trim(),
+        Huisnummer: modal.querySelector("#huisnummer").value.trim(),
+        Postcode: modal.querySelector("#postcode").value.trim(),
+        Gemeente: modal.querySelector("#gemeente").value.trim(),
+        Land: modal.querySelector("#land").value.trim(),
+        rol: modal.querySelector("#rol").value.trim(),
+        Paardnaam: modal.querySelector("#paardnaam").value.trim(),
+        contract: gekozenContracten
+      };
+
+      if (!nieuwContact.Voornaam || !nieuwContact.Achternaam) {
+        alert("❗ Voornaam en achternaam zijn verplicht.");
+        return;
+      }
+
+      const contacten = loadData("contacten") || [];
+      const index = contacten.findIndex(c => c.id === nieuwContact.id);
+
+      if (index > -1) contacten[index] = nieuwContact;
+      else contacten.push(nieuwContact);
+
+      saveData("contacten", contacten);
+      modal.remove();
+      refreshCallback?.();
+    });
+  }
+
 }

@@ -197,4 +197,107 @@ export class DataExchange {
       alert("❌ Importeren van stallen mislukt. Is het een geldig Excel-bestand?");
     }
   }
+
+  // -------------------------------------------------------
+  // 📤 EXPORT CONTACTEN
+  // -------------------------------------------------------
+  static exportContactenToExcel() {
+    const contacten = loadData("contacten") || [];
+    if (!contacten.length) {
+      alert("⚠️ Geen contacten om te exporteren.");
+      return;
+    }
+
+    const rows = contacten.map(c => ({
+      id: c.id,
+      klant_ID: c.klant_ID,
+      Voornaam: c.Voornaam,
+      Achternaam: c.Achternaam,
+      Straat: c.Straat,
+      Huisnummer: c.Huisnummer,
+      Postcode: c.Postcode,
+      Gemeente: c.Gemeente,
+      Land: c.Land,
+      Telefoon: c.Telefoon,
+      Email: c.Email,
+      rol: c.rol,
+      Paardnaam: c.Paardnaam
+    }));
+
+    const ws = XLSX.utils.json_to_sheet(rows);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Contacten");
+
+    XLSX.writeFile(wb, "contacten.xlsx");
+  }
+
+  // -------------------------------------------------------
+  // 📄 TEMPLATE CONTACTEN
+  // -------------------------------------------------------
+  static downloadContactenTemplate() {
+    const headers = [[
+      "Voornaam",
+      "Achternaam",
+      "Straat",
+      "Huisnummer",
+      "Postcode",
+      "Gemeente",
+      "Land",
+      "Telefoon",
+      "Email",
+      "rol",
+      "Paardnaam"
+    ]];
+
+    const wb = XLSX.utils.book_new();
+    const ws = XLSX.utils.aoa_to_sheet(headers);
+    XLSX.utils.book_append_sheet(wb, ws, "Template");
+
+    XLSX.writeFile(wb, "contacten-template.xlsx");
+  }
+
+  // -------------------------------------------------------
+  // 📥 IMPORT CONTACTEN
+  // -------------------------------------------------------
+  static async importContactenFromExcel(file, callback) {
+    try {
+      const data = await file.arrayBuffer();
+      const workbook = XLSX.read(data);
+      const sheet = workbook.Sheets[workbook.SheetNames[0]];
+      const contacten = XLSX.utils.sheet_to_json(sheet);
+
+      const geldige = contacten.filter(c => c.Voornaam?.trim() && c.Achternaam?.trim());
+      if (!geldige.length) {
+        alert("⚠️ Geen geldige contacten gevonden. Controleer Voornaam en Achternaam.");
+        return;
+      }
+
+      const nieuweContacten = geldige.map(c => ({
+        id: Date.now() + Math.floor(Math.random() * 10000),
+        klant_ID: Date.now() + Math.floor(Math.random() * 10000),
+        Voornaam: c.Voornaam || "",
+        Achternaam: c.Achternaam || "",
+        Straat: c.Straat || "",
+        Huisnummer: c.Huisnummer || "",
+        Postcode: c.Postcode || "",
+        Gemeente: c.Gemeente || "",
+        Land: c.Land || "",
+        Telefoon: c.Telefoon || "",
+        Email: c.Email || "",
+        rol: c.rol || "",
+        Paardnaam: c.Paardnaam || "",
+        contract: []
+      }));
+
+      const bestaande = loadData("contacten") || [];
+      const alles = [...bestaande, ...nieuweContacten];
+      saveData("contacten", alles);
+
+      alert(`✅ ${nieuweContacten.length} contacten geïmporteerd.`);
+      if (typeof callback === "function") callback();
+    } catch (err) {
+      console.error("❌ Fout bij import:", err);
+      alert("❌ Importeren van contacten mislukt. Is het een geldig Excel-bestand?");
+    }
+  }
 }
