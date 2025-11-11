@@ -10,21 +10,43 @@ export class Renderer {
   }
 
   _hideAllTabs() {
-    document.querySelectorAll(".tab-content").forEach(tab => {
-      tab.classList.remove("active", "fade-in");
-      tab.style.display = "none";
+    const tabs = document.querySelectorAll(".tab-content");
+    tabs.forEach(t => {
+      t.classList.remove("active", "fade-in");
+      t.style.opacity = "0";
+      t.style.display = "none";
+      t.style.transition = "";
     });
   }
 
   _switchToTab(id) {
-    document.getElementById("dashboard").style.display = "none";
+    const dashboard = document.getElementById("dashboard");
+    if (dashboard) dashboard.style.display = "none";
+
+    if (!this.container) {
+      console.warn("⚠️ Renderer.container ontbreekt — controleer initialisatie.");
+      return;
+    }
+
     this.container.style.display = "block";
     this._hideAllTabs();
+
     const tab = document.getElementById(id);
-    if (tab) {
-      tab.classList.add("active", "fade-in");
-      tab.style.display = "block";
+    if (!tab) {
+      console.warn(`⚠️ Tab met id "${id}" niet gevonden.`);
+      return;
     }
+
+    tab.style.display = "block";
+    tab.style.opacity = "0";
+    tab.style.transition = "none";
+    void tab.offsetWidth;
+
+    requestAnimationFrame(() => {
+      tab.style.transition = "opacity 350ms ease-in-out";
+      tab.style.opacity = "1";
+      tab.classList.add("active", "fade-in");
+    });
   }
 
   showDashboard() {
@@ -36,7 +58,7 @@ export class Renderer {
   // -------------------------------------------------------
   // PAARDEN
   // -------------------------------------------------------
-  showPaarden() {
+    showPaarden() {
     this._switchToTab("tab-paarden");
 
     let paarden = loadData("paarden") || [];
@@ -50,7 +72,9 @@ export class Renderer {
     const render = () => {
       const filtered = paarden
         .filter(p => p.naam.toLowerCase().includes(searchTerm.toLowerCase()))
-        .sort((a, b) => sortAsc ? a.naam.localeCompare(b.naam) : b.naam.localeCompare(a.naam));
+        .sort((a, b) =>
+          sortAsc ? a.naam.localeCompare(b.naam) : b.naam.localeCompare(a.naam)
+        );
 
       const totalPages = Math.ceil(filtered.length / pageSize);
       const offset = (currentPage - 1) * pageSize;
@@ -63,8 +87,7 @@ export class Renderer {
                 <h3>${p.naam}</h3>
                 <p><strong>Eigenaar:</strong> ${p.eigenaar}</p>
                 <p><strong>Dierenarts:</strong> ${p.dierenarts}</p>
-              </div>
-            `).join("")}
+              </div>`).join("")}
           </div>`
         : `<div class="empty-state">🚫 Geen paarden gevonden.</div>`;
 
@@ -105,6 +128,7 @@ export class Renderer {
       document.getElementById("addPaard").addEventListener("click", () => this.modals.openPaardForm(null, () => this.showPaarden()));
       document.getElementById("exportBtn").addEventListener("click", () => DataExchange.exportPaardenToExcel());
       document.getElementById("downloadTemplate").addEventListener("click", () => DataExchange.downloadPaardenTemplate());
+
       document.getElementById("importInput").addEventListener("change", async (e) => {
         const file = e.target.files[0];
         if (file) {
@@ -155,7 +179,8 @@ export class Renderer {
     render();
   }
 
-  showPaardDetails(paard) {
+
+    showPaardDetails(paard) {
     const tab = document.getElementById("tab-paarden");
 
     tab.innerHTML = `
@@ -250,11 +275,10 @@ export class Renderer {
     });
   }
 
-
 // -------------------------------------------------------
 // STALLEN
 // -------------------------------------------------------
-showStallen() {
+  showStallen() {
     this._switchToTab("tab-stallen");
 
     const stallenContainer = document.getElementById("tab-stallen");
@@ -373,16 +397,13 @@ showStallen() {
         });
       });
 
-      // ✅ FIX: correcte koppeling met controle
       document.querySelectorAll(".koppel-paard").forEach(btn => {
         btn.addEventListener("click", () => {
           const stalId = Number(btn.dataset.id);
           const locatieNaam = btn.dataset.locatie;
           const stalnr = parseInt(btn.dataset.stalnr);
 
-          const vrijePaarden = paarden.filter(p =>
-            (!p.stalnr && !p.stallocatie)
-          );
+          const vrijePaarden = paarden.filter(p => (!p.stalnr && !p.stallocatie));
 
           if (!vrijePaarden.length) {
             alert("❗ Geen beschikbare paarden om te koppelen.");
@@ -425,11 +446,10 @@ showStallen() {
 
     render();
   }
- // -------------------------------------------------------
-  // OVERIGE TABS
-  // -------------------------------------------------------
+/// voeding////
   showVoeding() {
     this._switchToTab("tab-voeding");
+
     document.getElementById("tab-voeding").innerHTML = `
       <div class="tab-header">
         <button class="back-btn" id="backBtn">⬅ Terug</button>
@@ -437,21 +457,15 @@ showStallen() {
       </div>
       <p>Voedingsschema’s volgen...</p>
     `;
+
     document.getElementById("backBtn").addEventListener("click", () => {
       this.showDashboard();
     });
-  
-
-      document.getElementById("importStallen").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          await DataExchange.importStallen(file, () => this.showStallen());
-        }
-      });
-    };
-
+  }
+////contacten///
   showContacten() {
     this._switchToTab("tab-contacten");
+
     document.getElementById("tab-contacten").innerHTML = `
       <div class="tab-header">
         <button class="back-btn" id="backBtn">⬅ Terug</button>
@@ -459,10 +473,12 @@ showStallen() {
       </div>
       <p>Contactpersonen volgen...</p>
     `;
+
     document.getElementById("backBtn").addEventListener("click", () => {
       this.showDashboard();
     });
-    render();
-  };
+  }
+
+ 
 }
 

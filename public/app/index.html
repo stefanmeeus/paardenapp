@@ -3,71 +3,126 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Paardenbeheer</title>
-  <link rel="stylesheet" href="/css/style.css" />
+  <title>🐴 StablelinQ</title>
+  <link rel="stylesheet" href="../css/style.css">
+
 </head>
+
 <body>
   <header class="main-header">
     <h1>🐴 StablelinQ</h1>
   </header>
 
-  <!-- 🐴 DASHBOARD -->
-  <main id="dashboard" class="main-content" style="display:none;">
-    <section class="dashboard">
+  <main class="main-content">
+    <!-- DASHBOARD -->
+    <section id="dashboard" class="dashboard active">
       <div class="grid">
-        <div class="tile paarden" data-tab="paarden">
-          <img src="/img/icons/Paard.png" alt="Paarden icoon" class="tile-icon" />
+        <div class="tile" data-tab="paarden">
+          <img src="../img/icons/Paard.png" alt="Paarden" />
           <span>Paarden</span>
         </div>
-
-        <div class="tile stallen" data-tab="stallen">
-          <img src="/img/icons/stal.png" alt="Stallen icoon" class="tile-icon" />
+        <div class="tile" data-tab="stallen">
+          <img src="../img/icons/stal.png" alt="Stallen" />
           <span>Stallen</span>
         </div>
-
-        <div class="tile voeding" data-tab="voeding">
-          <img src="/img/icons/Voeding.png" alt="Voeding icoon" class="tile-icon" />
+        <div class="tile" data-tab="voeding">
+          <img src="../img/icons/Voeding.png" alt="Voeding" />
           <span>Voeding</span>
         </div>
-
-        <div class="tile contacten" data-tab="contacten">
-          <img src="/img/icons/contact.png" alt="Contacten icoon" class="tile-icon" />
+        <div class="tile" data-tab="contacten">
+          <img src="../img/icons/contact.png" alt="Contacten" />
           <span>Contacten</span>
         </div>
-
-        <div class="tile vaccinatie" data-tab="vaccinatie">
-          <img src="/img/icons/Vaccinatie.png" alt="Vaccinatie icoon" class="tile-icon" />
+        <div class="tile" data-tab="vaccinatie">
+          <img src="../img/icons/vaccinatie.png" alt="Vaccinatie" />
           <span>Vaccinatie</span>
         </div>
-
-        <div class="tile contracten" data-tab="contracten">
-          <img src="/img/icons/Contract.png" alt="Contract icoon" class="tile-icon" />
+        <div class="tile" data-tab="contracten">
+          <img src="../img/icons/contract.png" alt="Contracten" />
           <span>Contracten</span>
         </div>
-
-        <div class="tile trainingen" data-tab="trainingen">
-          <img src="/img/icons/training.png" alt="Training icoon" class="tile-icon" />
+        <div class="tile" data-tab="trainingen">
+          <img src="../img/icons/training.png" alt="Trainingen" />
           <span>Trainingen</span>
         </div>
       </div>
     </section>
 
-    <section id="tab-container" class="tab-container" style="display: none;">
-      <div id="tab-paarden" class="tab-content">Geen paarden gevonden.</div>
-      <div id="tab-stallen" class="tab-content">Geen stallen gevonden.</div>
-      <div id="tab-voeding" class="tab-content">Geen voeding ingevoerd.</div>
-      <div id="tab-contacten" class="tab-content">Geen contacten gevonden.</div>
-      <div id="tab-vaccinatie" class="tab-content">Geen vaccinaties.</div>
-      <div id="tab-contracten" class="tab-content">Geen contracten.</div>
-      <div id="tab-trainingen" class="tab-content">Geen trainingen.</div>
+    <!-- TABS -->
+    <section id="tab-container" style="display: none;">
+      <div id="tab-paarden" class="tab-content"></div>
+      <div id="tab-stallen" class="tab-content"></div>
+      <div id="tab-voeding" class="tab-content"></div>
+      <div id="tab-contacten" class="tab-content"></div>
+      <div id="tab-vaccinatie" class="tab-content">
+        <div class="tab-header">
+          <button class="back-btn" id="back-vaccinatie">⬅ Terug</button>
+          <h2>📁 Vaccinatie</h2>
+        </div>
+        <p>Vaccinatiegegevens volgen...</p>
+      </div>
+      <div id="tab-contracten" class="tab-content">
+        <div class="tab-header">
+          <button class="back-btn" id="back-contracten">⬅ Terug</button>
+          <h2>📁 Contracten</h2>
+        </div>
+        <p>Contractgegevens volgen...</p>
+      </div>
+      <div id="tab-trainingen" class="tab-content">
+        <div class="tab-header">
+          <button class="back-btn" id="back-trainingen">⬅ Terug</button>
+          <h2>📁 Trainingen</h2>
+        </div>
+        <p>Trainingschema’s volgen...</p>
+      </div>
     </section>
   </main>
 
-  <script type="module" src="/app/app.js"></script>
+  <!-- ✅ SCRIPT: Renderer koppelen -->
+  <script type="module">
+    // ✅ Correct pad volgens jouw structuur:
+    // /public/app/index.html → ../../js/ui/Renderer.js
+    import { Renderer } from "../js/ui/Renderer.js"; // ← correct
 
+    // Controleer of script correct geladen is
+    console.log("✅ Renderer geladen vanuit:", import.meta.url);
 
+    const container = document.getElementById("tab-container");
+    const renderer = new Renderer(container);
 
+    console.log("✅ Renderer geïnitialiseerd", renderer);
 
+    const tabHandlers = {
+      paarden: () => renderer.showPaarden(),
+      stallen: () => renderer.showStallen(),
+      voeding: () => renderer.showVoeding(),
+      contacten: () => renderer.showContacten(),
+      vaccinatie: () => renderer._switchToTab("tab-vaccinatie"),
+      contracten: () => renderer._switchToTab("tab-contracten"),
+      trainingen: () => renderer._switchToTab("tab-trainingen"),
+    };
 
+    // Klikbare tegels activeren
+    document.querySelectorAll(".tile").forEach(tile => {
+      tile.addEventListener("click", () => {
+        const tab = tile.dataset.tab;
+        if (tabHandlers[tab]) {
+          console.log(`➡️ Open tab: ${tab}`);
+          tabHandlers[tab]();
+        } else {
+          console.warn(`⚠️ Geen renderer-functie voor tab "${tab}"`);
+        }
+      });
+    });
+
+    // Terugknoppen koppelen
+    ["vaccinatie", "contracten", "trainingen"].forEach(tab => {
+      const btn = document.getElementById(`back-${tab}`);
+      if (btn) {
+        btn.addEventListener("click", () => renderer.showDashboard());
+      }
+    });
+  </script>
 </body>
 </html>
+
