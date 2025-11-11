@@ -1,11 +1,5 @@
 import { generateId } from "../utils.js";
 
-export default class Paard {
- import { generateId } from "../utils.js";
-
-export class Paard {
-  import { generateId } from "../utils.js";
-
 export class Paard {
   constructor({
     id = generateId("paard"),
@@ -44,8 +38,6 @@ export class Paard {
     this.paspoort = paspoort;
     this.verslagen = verslagen;
   }
-}
-
 
   static fromJSON(obj) {
     return new Paard(obj);
