@@ -138,7 +138,8 @@ export class Renderer {
 
       container.querySelectorAll(".paard-card").forEach(card => {
         const id = parseInt(card.dataset.id);
-        const paard = paarden.find(p => p.id === id);
+        //const paard = paarden.find(p => p.id === id);
+        const paard = paarden.find(p => String(p.id) === String(p.paardId));
         if (paard) {
           card.addEventListener("click", () => this.showPaardDetails(paard));
         }
@@ -279,174 +280,177 @@ export class Renderer {
   // Stallen
   // -------------------------------------------------------
 
-  showStallen() {
-    this._switchToTab("tab-stallen");
+showStallen() {
+  this._switchToTab("tab-stallen");
 
-    const stallenContainer = document.getElementById("tab-stallen");
-    const locaties = loadData("locaties") || [];
-    const stallen = loadData("stallen") || [];
-    const paarden = loadData("paarden") || [];
+  const stallenContainer = document.getElementById("tab-stallen");
+  const locaties = loadData("locaties") || [];
+  const stallen = loadData("stallen") || [];
+  const paarden = loadData("paarden") || [];
 
-    const render = () => {
-      const listHTML = locaties.length
-        ? `<div class="locatie-grid">
-            ${locaties.map(loc => {
-              const bijbehorendeStallen = stallen
-                .filter(s => String(s.locatieId) === String(loc.id))
-                .sort((a, b) => a.stalnr - b.stalnr);
+  const render = () => {
+    const listHTML = locaties.length
+      ? `<div class="locatie-grid">
+          ${locaties.map(loc => {
+            const bijbehorendeStallen = stallen
+              .filter(s => String(s.locatieId) === String(loc.id))
+              .sort((a, b) => a.stalnr - b.stalnr);
 
-              const stalHTML = bijbehorendeStallen.length
-                ? `<div class="stal-grid" id="stallen-${loc.id}" style="display: none;">
-                    <h4>${loc.naam.toUpperCase()}</h4>
-                    ${bijbehorendeStallen.map(s => {
-                      const paard = paarden.find(p => p.id === s.paardId);
-                      return `
-                        <div class="stal-card ${paard ? "met-paard" : ""}">
-                          <strong>Stal ${s.stalnr}</strong>
-                          ${paard ? `<span class="paard-badge">${paard.naam}</span>` : "<br/>—"}
-                          <div class="stal-actions">
-                            ${!paard ? `<button class="btn-secondary koppel-paard" data-id="${s.id}" data-locatie="${loc.naam}" data-stalnr="${s.stalnr}">🐴</button>` : ""}
-                            <button class="btn-secondary delete-stal" data-id="${s.id}">🗑️</button>
-                          </div>
+            const stalHTML = bijbehorendeStallen.length
+              ? `<div class="stal-grid" id="stallen-${loc.id}" style="display: none;">
+                  <h4>${loc.naam.toUpperCase()}</h4>
+                  ${bijbehorendeStallen.map(s => {
+                    const paard = paarden.find(p => String(p.id) === String(s.paardId));
+                    return `
+                      <div class="stal-card ${paard ? "met-paard" : ""}">
+                        <strong>Stal ${s.stalnr}</strong>
+                        ${paard ? `<span class="paard-badge">${paard.naam}</span>` : "<br/>—"}
+                        <div class="stal-actions">
+                          ${!paard ? `<button class="btn-secondary koppel-paard" data-id="${s.id}" data-locatie="${loc.naam}" data-stalnr="${s.stalnr}">🐴</button>` : ""}
+                          <button class="btn-secondary delete-stal" data-id="${s.id}">🗑️</button>
                         </div>
-                      `;
-                    }).join("")}
-                  </div>`
-                : `<div class="stal-grid" id="stallen-${loc.id}" style="display: none;">
-                    <h4>${loc.naam.toUpperCase()}</h4>
-                    <div class="stal-card">Geen stallen</div>
-                  </div>`;
+                      </div>
+                    `;
+                  }).join("")}
+                </div>`
+              : `<div class="stal-grid" id="stallen-${loc.id}" style="display: none;">
+                  <h4>${loc.naam.toUpperCase()}</h4>
+                  <div class="stal-card">Geen stallen</div>
+                </div>`;
 
-              return `
-                <div class="card locatie-card">
-                  <div class="locatie-header">
-                    <strong>${loc.naam}</strong>
-                    <div class="locatie-actions">
-                      <button class="btn-primary open-locatie" data-id="${loc.id}"><span class="arrow">▶</span> Open</button>
-                      <button class="btn-secondary delete-locatie" data-id="${loc.id}">🗑️ Verwijderen</button>
-                    </div>
+            return `
+              <div class="card locatie-card">
+                <div class="locatie-header">
+                  <strong>${loc.naam}</strong>
+                  <div class="locatie-actions">
+                    <button class="btn-primary open-locatie" data-id="${loc.id}"><span class="arrow">▶</span> Open</button>
+                    <button class="btn-secondary delete-locatie" data-id="${loc.id}">🗑️ Verwijderen</button>
                   </div>
-                  ${stalHTML}
                 </div>
-              `;
-            }).join("")}
-          </div>`
-        : `<div class="empty-state">🚫 Geen stallocaties gevonden.</div>`;
+                ${stalHTML}
+              </div>
+            `;
+          }).join("")}
+        </div>`
+      : `<div class="empty-state">🚫 Geen stallocaties gevonden.</div>`;
 
-      stallenContainer.innerHTML = `
-        <div class="tab-header">
-          <button class="back-btn" id="backBtn">⬅ Terug</button>
-          <h2>📁 Stallen</h2>
-          <div class="stallen-actions">
-            <button id="addLocatie" class="btn-secondary">+ Nieuwe locatie</button>
-            <button id="addStalLos" class="btn-primary">+ Nieuwe stal</button>
-            <button id="exportStallen" class="btn-secondary">📤 Export</button>
-            <label class="btn-secondary" style="cursor: pointer;">
-              📥 Import
-              <input type="file" id="importStallen" accept=".xlsx,.xls" style="display: none;" />
-            </label>
-            <button id="downloadTemplateStallen" class="btn-secondary">📄 Sjabloon</button>
-          </div>
+    stallenContainer.innerHTML = `
+      <div class="tab-header">
+        <button class="back-btn" id="backBtn">⬅ Terug</button>
+        <h2>📁 Stallen</h2>
+        <div class="stallen-actions">
+          <button id="addLocatie" class="btn-secondary">+ Nieuwe locatie</button>
+          <button id="addStalLos" class="btn-primary">+ Nieuwe stal</button>
+          <button id="exportStallen" class="btn-secondary">📤 Export</button>
+          <label class="btn-secondary" style="cursor: pointer;">
+            📥 Import
+            <input type="file" id="importStallen" accept=".xlsx,.xls" style="display: none;" />
+          </label>
+          <button id="downloadTemplateStallen" class="btn-secondary">📄 Sjabloon</button>
         </div>
-        ${listHTML}
-      `;
+      </div>
+      ${listHTML}
+    `;
 
-      document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
-      document.getElementById("addLocatie").addEventListener("click", () => this.modals.openStalLocatieForm(null, () => this.showStallen()));
-      document.getElementById("addStalLos").addEventListener("click", () => this.modals.openStalForm(null, null, () => this.showStallen()));
+    document.getElementById("backBtn").addEventListener("click", () => this.showDashboard());
+    document.getElementById("addLocatie").addEventListener("click", () => this.modals.openStalLocatieForm(null, () => this.showStallen()));
+    document.getElementById("addStalLos").addEventListener("click", () => this.modals.openStalForm(null, null, () => this.showStallen()));
 
-      document.querySelectorAll(".open-locatie").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = btn.dataset.id;
-          const section = document.getElementById(`stallen-${id}`);
-          const isOpen = section.style.display === "block";
-          section.style.display = isOpen ? "none" : "block";
-          btn.classList.toggle("opened", !isOpen);
-          btn.querySelector(".arrow").textContent = isOpen ? "▶" : "▼";
-        });
+    document.querySelectorAll(".open-locatie").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = btn.dataset.id;
+        const section = document.getElementById(`stallen-${id}`);
+        const isOpen = section.style.display === "block";
+        section.style.display = isOpen ? "none" : "block";
+        btn.classList.toggle("opened", !isOpen);
+        btn.querySelector(".arrow").textContent = isOpen ? "▶" : "▼";
       });
+    });
 
-      document.querySelectorAll(".delete-locatie").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = Number(btn.dataset.id);
-          if (confirm("❗ Verwijder deze locatie en ALLE stallen hieronder?")) {
-            const nieuweLocaties = locaties.filter(l => l.id !== id);
-            const nieuweStallen = stallen.filter(s => s.locatieId !== id);
-            saveData("locaties", nieuweLocaties);
-            saveData("stallen", nieuweStallen);
-            this.showStallen();
-          }
-        });
-      });
-
-      document.querySelectorAll(".delete-stal").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = Number(btn.dataset.id);
-          if (confirm("❗ Verwijder deze stal?")) {
-            const nieuweStallen = stallen.filter(s => s.id !== id);
-            const nieuwePaarden = paarden.map(p => {
-              const s = stallen.find(st => st.id === id);
-              if (s && p.stalnr === s.stalnr && p.stallocatie === s.locatienaam) {
-                return { ...p, stallocatie: null, stalnr: null };
-              }
-              return p;
-            });
-            saveData("stallen", nieuweStallen);
-            saveData("paarden", nieuwePaarden);
-            this.showStallen();
-          }
-        });
-      });
-
-      document.querySelectorAll(".koppel-paard").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const stalId = Number(btn.dataset.id);
-          const locatieNaam = btn.dataset.locatie;
-          const stalnr = parseInt(btn.dataset.stalnr);
-
-          const vrijePaarden = paarden.filter(p => (!p.stalnr && !p.stallocatie));
-
-          if (!vrijePaarden.length) {
-            alert("❗ Geen beschikbare paarden om te koppelen.");
-            return;
-          }
-
-          const keuze = prompt(`Kies een paard:\n\n${vrijePaarden.map((p, i) => `${i + 1}. ${p.naam}`).join("\n")}`);
-          const index = parseInt(keuze) - 1;
-
-          if (isNaN(index) || index < 0 || index >= vrijePaarden.length) return;
-
-          const gekozen = vrijePaarden[index];
-          gekozen.stallocatie = locatieNaam;
-          gekozen.stalnr = stalnr;
-
-          const stal = stallen.find(s => s.id === stalId);
-          if (stal) stal.paardId = gekozen.id;
-
-          saveData("paarden", paarden);
-          saveData("stallen", stallen);
+    document.querySelectorAll(".delete-locatie").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = String(btn.dataset.id);
+        if (confirm("❗ Verwijder deze locatie en ALLE stallen hieronder?")) {
+          const nieuweLocaties = locaties.filter(l => String(l.id) !== id);
+          const nieuweStallen = stallen.filter(s => String(s.locatieId) !== id);
+          saveData("locaties", nieuweLocaties);
+          saveData("stallen", nieuweStallen);
           this.showStallen();
-        });
-      });
-
-      document.getElementById("exportStallen").addEventListener("click", () => {
-        DataExchange.exportStallen(locaties, stallen, paarden);
-      });
-
-      document.getElementById("downloadTemplateStallen").addEventListener("click", () => {
-        DataExchange.downloadStallenTemplate();
-      });
-
-      document.getElementById("importStallen").addEventListener("change", async (e) => {
-        const file = e.target.files[0];
-        if (file) {
-          await DataExchange.importStallen(file, () => this.showStallen());
         }
       });
-    };
+    });
 
-    render();
-  }
+    document.querySelectorAll(".delete-stal").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const id = String(btn.dataset.id);
+        if (confirm("❗ Verwijder deze stal?")) {
+          const nieuweStallen = stallen.filter(s => s.id !== id);
+          const nieuwePaarden = paarden.map(p => {
+            const s = stallen.find(st => st.id === id);
+            if (s && p.stalnr === s.stalnr && p.stallocatie === s.locatienaam) {
+              return { ...p, stallocatie: null, stalnr: null };
+            }
+            return p;
+          });
+          saveData("stallen", nieuweStallen);
+          saveData("paarden", nieuwePaarden);
+          this.showStallen();
+        }
+      });
+    });
+
+    document.querySelectorAll(".koppel-paard").forEach(btn => {
+      btn.addEventListener("click", () => {
+        const stalId = btn.dataset.id;
+        const locatieNaam = btn.dataset.locatie;
+        const stalnr = parseInt(btn.dataset.stalnr);
+
+        const vrijePaarden = paarden.filter(p => (!p.stalnr && !p.stallocatie));
+
+        if (!vrijePaarden.length) {
+          alert("❗ Geen beschikbare paarden om te koppelen.");
+          return;
+        }
+
+        const keuze = prompt(`Kies een paard:\n\n${vrijePaarden.map((p, i) => `${i + 1}. ${p.naam}`).join("\n")}`);
+        const index = parseInt(keuze) - 1;
+
+        if (isNaN(index) || index < 0 || index >= vrijePaarden.length) return;
+
+        const gekozen = vrijePaarden[index];
+        gekozen.stallocatie = locatieNaam;
+        gekozen.stalnr = stalnr;
+
+        const stalIndex = stallen.findIndex(s => s.id === stalId);
+        if (stalIndex !== -1) {
+          stallen[stalIndex].paardId = gekozen.id;
+        }
+
+        saveData("paarden", paarden);
+        saveData("stallen", stallen);
+        render();
+      });
+    });
+
+    document.getElementById("exportStallen").addEventListener("click", () => {
+      DataExchange.exportStallen(locaties, stallen, paarden);
+    });
+
+    document.getElementById("downloadTemplateStallen").addEventListener("click", () => {
+      DataExchange.downloadStallenTemplate();
+    });
+
+    document.getElementById("importStallen").addEventListener("change", async (e) => {
+      const file = e.target.files[0];
+      if (file) {
+        await DataExchange.importStallen(file, () => this.showStallen());
+      }
+    });
+  };
+
+  render();
+}
+
 
   // -------------------------------------------------------
   // Contacten
