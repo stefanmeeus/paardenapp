@@ -17,7 +17,7 @@
     <section id="dashboard" class="dashboard active">
       <div class="grid">
         <div class="tile" data-tab="paarden">
-          <img src="../img/icons/Paard.png" alt="Paarden" />
+       <img src="../img/icons/Paard.png" alt="Paarden" 
           <span>Paarden</span>
         </div>
         <div class="tile" data-tab="stallen">
@@ -90,11 +90,17 @@
       </div>
 
       <!-- STALLEN -->
-      <div id="tab-stallen" class="tab-content">
-        <div class="tab-header">
-          <button class="back-btn" id="back-stallen">⬅ Terug</button>
-          <h2>📁 Stallen</h2>
-        </div>
+     <div id="tab-stallen" class="tab-content">
+     <div class="page-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+     <button class="back-btn" id="back-stallen">⬅ Terug</button>
+     <img src="../img/icons/stal.png" alt="Stal" class="kaart-icon" style="width: 32px; height: 32px;" />
+     <h1 style="margin: 0;">Stallen</h1>
+     </div>
+
+  <div id="stallenList"></div>
+</div>
+
+
         <div class="kaart-lijst" id="stallenList">
           <!-- Dynamisch gevuld -->
         </div>

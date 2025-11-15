@@ -110,6 +110,7 @@ label.btn-secondary {
   margin: 0 auto;
 }
 
+
 /* ========== GENERIEKE KAART ========== */
 .kaart {
   background: white;
@@ -176,4 +177,5 @@ label.btn-secondary {
     width: 100%;
     max-width: 100%;
   }
+  
 }

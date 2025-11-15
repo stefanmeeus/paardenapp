@@ -180,32 +180,40 @@ export class ModalManager {
   /* =====================================================
    📍 FORMULIER STALLOCATIE
   ===================================================== */
-  openStalLocatieForm(locatie = null, callback) {
-    const modal = document.createElement("div");
-    modal.classList.add("modal");
+ openStalLocatieForm(locatie = null, callback) {
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
 
-    const naam = locatie?.naam || "";
+  const naam = locatie?.naam || "";
 
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>${locatie ? "✏️ Bewerken" : "Nieuwe Stallocatie"}</h3>
-        <label>Locatienaam:
-          <input id="locatieNaam" value="${naam}" />
-        </label>
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="form-kaart">
+        <h3>${locatie ? "✏️ Stallocatie bewerken" : "➕ Nieuwe stallocatie"}</h3>
+
+        <label for="locatieNaam">Locatienaam:</label>
+        <input id="locatieNaam" type="text" value="${naam}" />
 
         <div class="modal-buttons">
-          <button id="saveLocatie">Opslaan</button>
-          <button id="closeModal">Annuleer</button>
+          <button id="saveLocatie" class="btn btn-primary">Opslaan</button>
+          <button id="closeModal" class="btn btn-secondary">Annuleer</button>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
-    document.body.appendChild(modal);
-    modal.style.display = "flex";
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
 
-    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+  const closeBtn = modal.querySelector("#closeModal");
+  const saveBtn = modal.querySelector("#saveLocatie");
 
-    modal.querySelector("#saveLocatie").addEventListener("click", () => {
+  if (closeBtn) {
+    closeBtn.addEventListener("click", () => modal.remove());
+  }
+
+  if (saveBtn) {
+    saveBtn.addEventListener("click", () => {
       const naam = modal.querySelector("#locatieNaam").value.trim();
       if (!naam) return alert("❗ Naam verplicht");
 
@@ -219,7 +227,7 @@ export class ModalManager {
         naam
       };
 
-      const result = locatie
+      const result = locatie?.id
         ? locaties.map(l => (l.id === locatie.id ? nieuwe : l))
         : [...locaties, nieuwe];
 
@@ -228,80 +236,93 @@ export class ModalManager {
       callback?.();
     });
   }
+}
+
 
   /* =====================================================
    🏚️ FORMULIER STAL
   ===================================================== */
-  openStalForm(stal = null, locatie = null, callback) {
-    const modal = document.createElement("div");
-    modal.classList.add("modal");
+ openStalForm(stal = null, locatie = null, callback) {
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
 
-    const locaties = loadData("locaties") || [];
+  const locaties = loadData("locaties") || [];
 
-    const locatieId = locatie?.id || stal?.locatieId || "";
-    const nummer = stal?.stalnr || "";
+  const locatieId = locatie?.id || stal?.locatieId || "";
+  const nummer = stal?.stalnr || "";
 
-    const opts = locaties.map(l => `
-      <option value="${l.id}" ${l.id === locatieId ? "selected" : ""}>${l.naam}</option>
-    `).join("");
+  const opts = locaties.map(l => `
+    <option value="${l.id}" ${l.id === locatieId ? "selected" : ""}>${l.naam}</option>
+  `).join("");
 
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>${stal ? "✏️ Stal bewerken" : "Nieuwe Stal"}</h3>
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="form-kaart">
+        <h3>${stal ? "✏️ Stal bewerken" : "➕ Nieuwe stal"}</h3>
 
-        <label>Locatie:
-          <select id="locatieSelect">${opts}</select>
-        </label>
+        <label for="locatieSelect">Locatie:</label>
+        <select id="locatieSelect">${opts}</select>
 
-        <label>Stalnummer:
-          <input id="stalNr" type="number" value="${nummer}" />
-        </label>
+        <label for="stalNr">Stalnummer:</label>
+        <input id="stalNr" type="number" value="${nummer}" />
 
         <div class="modal-buttons">
-          <button id="saveStal">Opslaan</button>
-          <button id="closeModal">Annuleer</button>
+          <button id="saveStal" class="btn btn-primary">Opslaan</button>
+          <button id="closeModal" class="btn btn-secondary">Annuleer</button>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
-    document.body.appendChild(modal);
-    modal.style.display = "flex";
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
 
-    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+  // Event listeners
+  modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
 
-    modal.querySelector("#saveStal").addEventListener("click", () => {
-      const selectedLoc = modal.querySelector("#locatieSelect").value;
-      const nummer = parseInt(modal.querySelector("#stalNr").value);
+  modal.querySelector("#saveStal").addEventListener("click", () => {
+    const selectedLocId = modal.querySelector("#locatieSelect").value;
+    const nummer = parseInt(modal.querySelector("#stalNr").value);
 
-      if (!nummer) return alert("❗ Stalnummer verplicht");
+    if (!nummer) return alert("❗ Stalnummer verplicht");
 
-      const stallen = loadData("stallen") || [];
+    const stallen = loadData("stallen") || [];
 
-      const bestaat = stallen.some(
-        s => String(s.locatieId) === String(selectedLoc) &&
-             s.stalnr === nummer &&
-             s.id !== stal?.id
-      );
-      if (bestaat) return alert("❌ Dat nummer bestaat al in deze locatie");
+    const bestaat = stallen.some(s =>
+      String(s.locatieId) === String(selectedLocId) &&
+      s.stalnr === nummer &&
+      s.id !== stal?.id
+    );
+    if (bestaat) return alert("❌ Dat nummer bestaat al in deze locatie");
 
-      const locatieObj = locatie || locaties.find(l => String(l.id) === String(selectedLoc));
-      const nieuwe = new Stal({
-        id: stal?.id,
-        locatieId: selectedLoc,
-        locatienaam: locatieObj?.naam?.trim() || "",
-        stalnr: nummer,
-        paardId: stal?.paardId || null
-      });
+    const locatieObj = locaties.find(l => String(l.id) === String(selectedLocId));
 
-      const result = stal
-        ? stallen.map(s => (s.id === stal.id ? nieuwe : s))
-        : [...stallen, nieuwe];
+    const nieuwe = {
+      id: stal?.id || Date.now(),
+      locatieId: selectedLocId,
+      locatienaam: locatieObj?.naam?.trim() || "",
+      stalnr: nummer,
+      paardId: stal?.paardId || null
+    };
 
-      saveData("stallen", result);
-      modal.remove();
-      callback?.();
-    });
-  }
+    let result;
+    if (stal?.id) {
+      result = stallen.map(s => (s.id === stal.id ? nieuwe : s));
+    } else {
+      result = [...stallen, nieuwe];
+    }
+
+    console.log("📦 Nieuwe stal-object:", nieuwe);
+    console.log("📋 Nieuwe lijst met stallen:", result);
+
+    saveData("stallen", result);
+    console.log("💾 Stallen opgeslagen in localStorage");
+
+    modal.remove();
+    callback?.();
+  });
+}
+
     /* =====================================================
    🐴 PAARD KOPPELEN AAN STAL
   ===================================================== */
