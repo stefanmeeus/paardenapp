@@ -312,12 +312,7 @@ export class ModalManager {
       result = [...stallen, nieuwe];
     }
 
-    console.log("📦 Nieuwe stal-object:", nieuwe);
-    console.log("📋 Nieuwe lijst met stallen:", result);
-
     saveData("stallen", result);
-    console.log("💾 Stallen opgeslagen in localStorage");
-
     modal.remove();
     callback?.();
   });
@@ -326,60 +321,74 @@ export class ModalManager {
     /* =====================================================
    🐴 PAARD KOPPELEN AAN STAL
   ===================================================== */
-  openPaardKoppelenForm(stal, locatieNaam, callback) {
-    const paarden = loadData("paarden") || [];
-    const stallen = loadData("stallen") || [];
+openPaardKoppelenForm(stal, locatieNaam, callback) {
+  if (!stal || !stal.id || !stal.stalnr) {
+    console.error("❌ Ongeldig stal-object:", stal);
+    return;
+  }
 
-    const vrijePaarden = paarden.filter(p => !p.stalnr && !p.stallocatie);
+  const paarden = loadData("paarden") || [];
+  const stallen = loadData("stallen") || [];
 
-    if (!vrijePaarden.length) {
-      alert("❗ Geen vrije paarden beschikbaar.");
+  // 🎯 Alleen paarden die nog niet gekoppeld zijn
+  const vrijePaarden = paarden.filter(p => !stallen.some(s => s.paardId == p.id));
+
+  if (!vrijePaarden.length) {
+    alert("❗ Geen vrije paarden beschikbaar.");
+    return;
+  }
+
+  const modal = document.createElement("div");
+  modal.classList.add("modal");
+
+  modal.innerHTML = `
+    <div class="modal-content">
+      <div class="form-kaart">
+        <h3>🐴 Koppel paard aan <strong>Stal ${stal.stalnr}</strong> (${locatieNaam})</h3>
+
+        <label for="paardSelect">Selecteer paard:</label>
+        <select id="paardSelect">
+          ${vrijePaarden.map(p => `<option value="${p.id}">${p.naam}</option>`).join("")}
+        </select>
+
+        <div class="modal-buttons">
+          <button id="koppelBtn" class="btn btn-primary">✅ Koppel</button>
+          <button id="closeModal" class="btn btn-secondary">Annuleer</button>
+        </div>
+      </div>
+    </div>
+  `;
+
+  document.body.appendChild(modal);
+  modal.style.display = "flex";
+
+  // 🔘 Events
+  modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+
+  modal.querySelector("#koppelBtn").addEventListener("click", () => {
+    const paardId = parseInt(modal.querySelector("#paardSelect").value);
+    const paard = paarden.find(p => p.id === paardId);
+    if (!paard) {
+      alert("❌ Paard niet gevonden");
       return;
     }
 
-    const modal = document.createElement("div");
-    modal.classList.add("modal");
+    // 🔄 Paard bijwerken
+    paard.stalnr = stal.stalnr;
+    paard.stallocatie = locatieNaam;
 
-    modal.innerHTML = `
-      <div class="modal-content">
-        <h3>🐴 Koppel paard aan Stal ${stal.stalnr} (${locatieNaam})</h3>
-        <label>Selecteer paard:
-          <select id="paardSelect">
-            ${vrijePaarden.map(p => `<option value="${p.id}">${p.naam}</option>`).join("")}
-          </select>
-        </label>
-        <div class="modal-buttons">
-          <button id="koppelBtn">Koppel</button>
-          <button id="closeModal">Annuleer</button>
-        </div>
-      </div>
-    `;
+    // 🔄 Stal bijwerken
+    const targetStal = stallen.find(s => s.id === stal.id);
+    if (targetStal) targetStal.paardId = paard.id;
 
-    document.body.appendChild(modal);
-    modal.style.display = "flex";
+    saveData("paarden", paarden);
+    saveData("stallen", stallen);
 
-    modal.querySelector("#closeModal").addEventListener("click", () => modal.remove());
+    modal.remove();
+    callback?.();
+  });
+}
 
-    modal.querySelector("#koppelBtn").addEventListener("click", () => {
-      const paardId = parseInt(modal.querySelector("#paardSelect").value);
-      const paard = paarden.find(p => p.id === paardId);
-      if (!paard) return;
-
-      // Paard bijwerken
-      paard.stalnr = stal.stalnr;
-      paard.stallocatie = locatieNaam;
-
-      // Stal bijwerken
-      const targetStal = stallen.find(s => s.id === stal.id);
-      if (targetStal) targetStal.paardId = paard.id;
-
-      saveData("paarden", paarden);
-      saveData("stallen", stallen);
-
-      modal.remove();
-      callback?.();
-    });
-  }
 
   /* =====================================================
    📇 FORMULIER CONTACT

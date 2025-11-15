@@ -530,12 +530,26 @@ showStalDetails(locatieId) {
     });
   });
 
-  grid.querySelectorAll(".koppelBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      this.modals.openKoppelForm(id, () => this.showStalDetails(locatieId));
-    });
+grid.querySelectorAll(".koppelBtn").forEach(btn => {
+  btn.addEventListener("click", () => {
+    const id = btn.dataset.id;
+
+    // 👉 Zoek de volledige stal op
+    const stallen = loadData("stallen") || [];
+    const stalObj = stallen.find(s => String(s.id) === String(id));
+
+    if (!stalObj) {
+      console.error("❌ Stal niet gevonden voor koppelen:", id);
+      return;
+    }
+
+    // 👉 Geef het volledige object door, niet alleen het ID
+    this.modals.openPaardKoppelenForm(stalObj, stalObj.locatienaam, () => 
+      this.showStalDetails(locatieId)
+    );
   });
+});
+
 
   // Back knop
   document.getElementById("back-stallen").addEventListener("click", () => this.showStallen());
