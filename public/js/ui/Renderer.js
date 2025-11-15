@@ -62,8 +62,29 @@ export class Renderer {
     this.container.style.display = "none";
     this._hideAllTabs();
   }
+  //--------------------------------------------------------
+  //Dashbord
+  //--------------------------------------------------------
+  showDashboard() {
+    console.log("🏠 Dashboard tonen");
 
-  // -------------------------------------------------------
+    const dashboard = document.getElementById("dashboard");
+    const tabContainer = document.getElementById("tab-container");
+
+    if (!dashboard) {
+        console.error("❌ Element #dashboard bestaat niet!");
+        return;
+    }
+
+    // Dashboard terug tonen
+    dashboard.style.display = "block";
+    dashboard.classList.add("active");
+
+    // Tabs verbergen
+    tabContainer.style.display = "none";
+}
+
+// -------------------------------------------------------
   // PAARDEN
   // -------------------------------------------------------
 showPaarden() {
@@ -483,11 +504,22 @@ showStalDetails(locatieId) {
 
   container.innerHTML = `
     <div class="tab-header">
-      <button class="back-btn" id="back-stallen">⬅ Terug</button>
+      <button class="back-btn" id="back-to-locaties">⬅ Terug</button>
       <h2><img src="../img/icons/stal.png" class="kaart-icon" /> ${locatie.naam}</h2>
     </div>
     <div class="paard-grid"></div>
   `;
+
+  // ✅ Back button correct aansluiten
+  const backBtn = document.getElementById("back-to-locaties");
+  if (backBtn) {
+    backBtn.addEventListener("click", () => {
+      console.log("⬅ Terug naar locaties");
+      this.showStallen();
+    });
+  } else {
+    console.warn("⚠️ Knop #back-stallen niet gevonden");
+  }
 
   const grid = container.querySelector(".paard-grid");
 
@@ -506,7 +538,7 @@ showStalDetails(locatieId) {
     grid.appendChild(kaart);
   });
 
-  // Interactie
+  // Verwijderen
   grid.querySelectorAll(".verwijderBtn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
@@ -518,6 +550,7 @@ showStalDetails(locatieId) {
     });
   });
 
+  // Ontkoppelen
   grid.querySelectorAll(".ontkoppelBtn").forEach(btn => {
     btn.addEventListener("click", () => {
       const id = btn.dataset.id;
@@ -530,32 +563,24 @@ showStalDetails(locatieId) {
     });
   });
 
-grid.querySelectorAll(".koppelBtn").forEach(btn => {
-  btn.addEventListener("click", () => {
-    const id = btn.dataset.id;
+  // Koppelen
+  grid.querySelectorAll(".koppelBtn").forEach(btn => {
+    btn.addEventListener("click", () => {
+      const id = btn.dataset.id;
+      const stallen = loadData("stallen") || [];
+      const stalObj = stallen.find(s => String(s.id) === String(id));
 
-    // 👉 Zoek de volledige stal op
-    const stallen = loadData("stallen") || [];
-    const stalObj = stallen.find(s => String(s.id) === String(id));
+      if (!stalObj) {
+        console.error("❌ Stal niet gevonden voor koppelen:", id);
+        return;
+      }
 
-    if (!stalObj) {
-      console.error("❌ Stal niet gevonden voor koppelen:", id);
-      return;
-    }
-
-    // 👉 Geef het volledige object door, niet alleen het ID
-    this.modals.openPaardKoppelenForm(stalObj, stalObj.locatienaam, () => 
-      this.showStalDetails(locatieId)
-    );
+      this.modals.openPaardKoppelenForm(stalObj, stalObj.locatienaam, () => 
+        this.showStalDetails(locatieId)
+      );
+    });
   });
-});
-
-
-  // Back knop
-  document.getElementById("back-stallen").addEventListener("click", () => this.showStallen());
 }
-
-
   // -------------------------------------------------------
   // Contacten
   // -------------------------------------------------------

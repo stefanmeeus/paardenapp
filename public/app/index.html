@@ -13,11 +13,12 @@
   </header>
 
   <main class="main-content">
-    <!-- DASHBOARD -->
+
+    <!-- ✅ DASHBOARD (juiste ID toegevoegd!) -->
     <section id="dashboard" class="dashboard active">
       <div class="grid">
         <div class="tile" data-tab="paarden">
-       <img src="../img/icons/Paard.png" alt="Paarden" 
+          <img src="../img/icons/Paard.png" alt="Paarden">
           <span>Paarden</span>
         </div>
         <div class="tile" data-tab="stallen">
@@ -64,9 +65,8 @@
           <button class="back-btn" id="back-paarden">⬅ Terug</button>
           <h2>
             <img src="../img/icons/Paard.png" alt="Paarden" style="width: 28px; height: 28px; vertical-align: middle;" />
-             Paarden
+            Paarden
           </h2>
-
         </div>
         <div class="paarden-search-wrapper">
           <input type="text" class="search-input" placeholder="Zoek op naam..." />
@@ -79,9 +79,7 @@
             </select>
           </div>
         </div>
-        <div class="kaart-lijst" id="paardenList">
-          <!-- Dynamisch gevuld -->
-        </div>
+        <div class="kaart-lijst" id="paardenList"></div>
         <div class="pagination">
           <button disabled>&lt;</button>
           <span>Pagina 1 / 1</span>
@@ -90,20 +88,13 @@
       </div>
 
       <!-- STALLEN -->
-     <div id="tab-stallen" class="tab-content">
-     <div class="page-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
-     <button class="back-btn" id="back-stallen">⬅ Terug</button>
-     <img src="../img/icons/stal.png" alt="Stal" class="kaart-icon" style="width: 32px; height: 32px;" />
-     <h1 style="margin: 0;">Stallen</h1>
-     </div>
-
-  <div id="stallenList"></div>
-</div>
-
-
-        <div class="kaart-lijst" id="stallenList">
-          <!-- Dynamisch gevuld -->
+      <div id="tab-stallen" class="tab-content">
+        <div class="page-header" style="display: flex; align-items: center; gap: 0.75rem; margin-bottom: 2rem;">
+          <button class="back-btn" id="back-stallen">⬅ Terug</button>
+          <img src="../img/icons/stal.png" alt="Stal" class="kaart-icon" style="width: 32px; height: 32px;" />
+          <h1 style="margin: 0;">Stallen</h1>
         </div>
+        <div class="kaart-lijst" id="stallenList"></div>
       </div>
 
       <!-- VOEDING -->
@@ -112,9 +103,7 @@
           <button class="back-btn" id="back-voeding">⬅ Terug</button>
           <h2>📁 Voeding</h2>
         </div>
-        <div class="kaart-lijst" id="voedingList">
-          <!-- Dynamisch gevuld -->
-        </div>
+        <div class="kaart-lijst" id="voedingList"></div>
       </div>
 
       <!-- CONTACTEN -->
@@ -134,9 +123,7 @@
             </select>
           </div>
         </div>
-        <div class="kaart-lijst" id="contactenList">
-          <!-- Dynamisch gevuld -->
-        </div>
+        <div class="kaart-lijst" id="contactenList"></div>
         <div class="pagination">
           <button disabled>&lt;</button>
           <span>Pagina 1 / 1</span>
@@ -145,34 +132,13 @@
       </div>
 
       <!-- MEDICATIE -->
-  <div id="tab-medicatie" class="tab-content">
-    <div class="tab-header">
-      <button class="back-btn" id="back-medicatie">⬅ Terug</button>
-      <h2>📁 Medicatie</h2>
-  </div>
-
-  <div class="paarden-search-wrapper">
-    <input type="text" class="search-input" placeholder="Zoek medicatie of paard..." />
-    <div class="page-size-wrapper">
-      <label for="medicatiePageSize">Per pagina:</label>
-      <select id="medicatiePageSize">
-        <option value="4">4</option>
-        <option value="8">8</option>
-        <option value="12">12</option>
-      </select>
-    </div>
-  </div>
-
-  <div class="kaart-lijst" id="medicatieList">
-    <!-- Dynamisch gevuld via JS -->
-  </div>
-
-  <div class="pagination">
-    <button disabled>&lt;</button>
-    <span>Pagina 1 / 1</span>
-    <button>&gt;</button>
-  </div>
-</div>
+      <div id="tab-medicatie" class="tab-content">
+        <div class="tab-header">
+          <button class="back-btn" id="back-medicatie">⬅ Terug</button>
+          <h2>📁 Medicatie</h2>
+        </div>
+        <div class="kaart-lijst" id="medicatieList"></div>
+      </div>
 
       <!-- VACCINATIE -->
       <div id="tab-vaccinatie" class="tab-content">
@@ -180,9 +146,7 @@
           <button class="back-btn" id="back-vaccinatie">⬅ Terug</button>
           <h2>📁 Vaccinatie</h2>
         </div>
-        <div class="kaart-lijst" id="vaccinatieList">
-          <!-- Dynamisch gevuld -->
-        </div>
+        <div class="kaart-lijst" id="vaccinatieList"></div>
       </div>
 
       <!-- CONTRACTEN -->
@@ -191,9 +155,7 @@
           <button class="back-btn" id="back-contracten">⬅ Terug</button>
           <h2>📁 Contracten</h2>
         </div>
-        <div class="kaart-lijst" id="contractenList">
-          <!-- Dynamisch gevuld -->
-        </div>
+        <div class="kaart-lijst" id="contractenList"></div>
       </div>
 
       <!-- TRAININGEN -->
@@ -202,20 +164,18 @@
           <button class="back-btn" id="back-trainingen">⬅ Terug</button>
           <h2>📁 Trainingen</h2>
         </div>
-        <div class="kaart-lijst" id="trainingenList">
-          <!-- Dynamisch gevuld -->
+        <div class="kaart-lijst" id="trainingenList"></div>
+      </div>
+
+      <!-- VOEDEREN -->
+      <div id="tab-voederen" class="tab-content">
+        <div class="tab-header">
+          <button class="back-btn" id="back-voederen">⬅ Terug</button>
+          <h2>🐴 Voederen</h2>
         </div>
+        <div class="kaart-lijst" id="voederenList"></div>
       </div>
-      <!-- voederen -->
-    <div id="tab-voederen" class="tab-content">
-      <div class="tab-header">
-        <button class="back-btn" id="back-voederen">⬅ Terug</button>
-       <h2>🐴 Voederen</h2>
-      </div>
-    <div id="voederenList">
-    <!-- Wordt gevuld met stal-locaties -->
-  </div>
-</div>
+
     </section>
   </main>
 
@@ -248,13 +208,19 @@
       });
     });
 
-    // ✅ Alle back-buttons activeren
-    ["paarden", "stallen", "voeding", "contacten", "medicatie", "vaccinatie", "contracten", "trainingen"].forEach(tab => {
+    // Back-knoppen → dashboard
+    [
+      "paarden","stallen","voeding","contacten",
+      "medicatie","vaccinatie","contracten","trainingen","voederen"
+    ].forEach(tab => {
       const btn = document.getElementById(`back-${tab}`);
       if (btn) {
         btn.addEventListener("click", () => renderer.showDashboard());
       }
     });
+
+    renderer.showDashboard();
   </script>
+
 </body>
 </html>
