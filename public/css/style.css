@@ -179,3 +179,60 @@ label.btn-secondary {
   }
   
 }
+/* ========== DASHBOARD TEGELS ========== */
+.grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);  /* 3 kolommen in 3x3 raster */
+  gap: 1rem;
+  justify-items: center;
+  padding: 1rem;
+}
+
+.tile {
+  width: 200px;         /* Klein formaat */
+  height: 200px;
+  background: #ffffff;
+  border-radius: 8px;
+  box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: transform 0.2s;
+  text-align: center;
+}
+
+.tile:hover {
+  transform: scale(1.05);
+}
+
+.tile img {
+  width: 100px;
+  height: 100px;
+  margin-bottom: 0.4rem;
+}
+
+.tile span {
+  font-size: 0.7rem;
+  color: #333;
+}
+@media (max-width: 600px) {
+  .grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .tile {
+    width: 70px;
+    height: 70px;
+  }
+
+  .tile img {
+    width: 30px;
+    height: 30px;
+  }
+
+  .tile span {
+    font-size: 0.65rem;
+  }
+}
