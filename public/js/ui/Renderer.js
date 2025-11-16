@@ -304,12 +304,11 @@ export class Renderer {
 }
 
 showPaardDetails(paard) {
-  console.log("✅ Nieuwe showPaardDetails actief");
 
   const tab = document.getElementById("tab-paarden");
   tab.innerHTML = "";
 
-  // 🔙 Terugknop + Titel
+  // 🔙 Header met terugknop
   const header = document.createElement("div");
   header.className = "tab-header";
   header.innerHTML = `
@@ -318,68 +317,110 @@ showPaardDetails(paard) {
   `;
   tab.appendChild(header);
 
-  // ✏️🗑️ Actieknoppen
+  // 🛠️ Bewerken / verwijderen knoppen
   const acties = renderKaartActies({
     onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
     onDelete: () => {
       if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
         const paarden = loadData("paarden") || [];
-        const nieuweLijst = paarden.filter(p => p.id !== paard.id);
-        saveData("paarden", nieuweLijst);
+        const nieuw = paarden.filter(p => p.id !== paard.id);
+        saveData("paarden", nieuw);
         this.showPaarden();
       }
     }
   });
 
-  // 🐴 Paardgegevens-kaart (met juiste opmaak)
-  const velden = [
-    "leeftijd", "ras", "stallocatie", "stalnr", "training", "trainer",
-    "eigenaar", "dierenarts", "hoefsmid", "vaccinatie", "ontworming", "opmerkingen"
-  ];
-
-  // ✅ Zet training-boolean om naar tekst
+  // ✅ Netjes formatten
   if (paard.training !== undefined) {
     paard.training = paard.training ? "✅ Ja" : "❌ Nee";
   }
 
-  const detailKaart = renderDetailKaart({
-    type: "paard",
-    data: paard,
-    velden,
-    acties
-  });
+  // 🐴 GEGEVENS-KAART
+const velden = [
+  "leeftijd", "ras", "stallocatie", "stalnr", "training", "trainer",
+  "eigenaar", "dierenarts", "hoefsmid", "vaccinatie", "ontworming", "opmerkingen"
+];
 
-  tab.appendChild(detailKaart);
+const kaartActies = renderKaartActies({
+  onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
+  onDelete: () => {
+    if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
+      const paarden = loadData("paarden") || [];
+      const nieuw = paarden.filter(p => p.id !== paard.id);
+      saveData("paarden", nieuw);
+      this.showPaarden();
+    }
+  }
+});
 
-  // 📁 Documenten-kaart
+const gegevensKaart = renderDetailKaart({
+  type: "paard",
+  data: paard,
+  velden
+});
+
+gegevensKaart.querySelector(".kaart-body").appendChild(acties);
+tab.appendChild(gegevensKaart);
+
+  // 📁 DOCUMENTEN-KAART
   const documentenKaart = document.createElement("div");
   documentenKaart.className = "kaart kaart-paarden";
-  documentenKaart.innerHTML = `
-    <div class="kaart-header">📁 Documenten</div>
-    <div class="kaart-body">
-      <p><strong>📘 Paspoort:</strong> ${
-        paard.paspoort
-          ? `<a href="${paard.paspoort.data}" target="_blank">${paard.paspoort.name}</a>`
-          : "Geen document"
-      }</p>
 
-      <p><strong>🩺 Dierenartsverslagen:</strong></p>
-      <ul>
-        ${
-          paard.verslagen?.length
-            ? paard.verslagen
-                .map(doc => `<li><a href="${doc.data}" target="_blank">${doc.name}</a></li>`)
-                .join("")
-            : "<li>Geen verslagen beschikbaar</li>"
-        }
-      </ul>
-    </div>
-  `;
+  const documentenBody = document.createElement("div");
+  documentenBody.className = "kaart-body";
+
+  const paspoort = document.createElement("p");
+  paspoort.innerHTML = `<strong>📘 Paspoort:</strong> ${
+    paard.paspoort
+      ? `<a href="${paard.paspoort.data}" target="_blank">${paard.paspoort.name}</a>`
+      : "Geen document"
+  }`;
+  documentenBody.appendChild(paspoort);
+
+  const verslagenP = document.createElement("p");
+  verslagenP.innerHTML = `<strong>🩺 Dierenartsverslagen:</strong>`;
+  documentenBody.appendChild(verslagenP);
+
+  // 📂 Mappen per jaar
+  const verslagenContainer = document.createElement("div");
+  const verslagenPerJaar = {};
+
+  (paard.verslagen || []).forEach(doc => {
+    const jaar = doc.jaar || "Onbekend";
+    if (!verslagenPerJaar[jaar]) verslagenPerJaar[jaar] = [];
+    verslagenPerJaar[jaar].push(doc);
+  });
+
+  if (Object.keys(verslagenPerJaar).length > 0) {
+    Object.keys(verslagenPerJaar)
+      .sort((a, b) => b - a) // Nieuwste eerst
+      .forEach(jaar => {
+        const folder = document.createElement("div");
+        folder.innerHTML = `<strong>📁 ${jaar}</strong>`;
+
+        const ul = document.createElement("ul");
+        verslagenPerJaar[jaar].forEach(doc => {
+          const li = document.createElement("li");
+          li.innerHTML = `<a href="${doc.data}" target="_blank">${doc.name}</a>`;
+          ul.appendChild(li);
+        });
+
+        verslagenContainer.appendChild(folder);
+        verslagenContainer.appendChild(ul);
+      });
+  } else {
+    verslagenContainer.innerHTML = "<p>Geen verslagen beschikbaar</p>";
+  }
+
+  documentenBody.appendChild(verslagenContainer);
+  documentenKaart.innerHTML = `<div class="kaart-header">📁 Documenten</div>`;
+  documentenKaart.appendChild(documentenBody);
   tab.appendChild(documentenKaart);
 
-  // ⬆️ Upload-kaart met radiobutton/dropbox
+  // ⬆️ UPLOAD-KAART
   const uploadKaart = document.createElement("div");
   uploadKaart.className = "kaart kaart-paarden";
+
   uploadKaart.innerHTML = `
     <div class="kaart-header">📤 Upload nieuwe documenten</div>
     <div class="kaart-body">
@@ -387,13 +428,13 @@ showPaardDetails(paard) {
         <label><input type="radio" name="uploadType" value="paspoort" checked /> 📘 Paspoort</label>
         <label><input type="radio" name="uploadType" value="verslagen" /> 🩺 Dierenartsverslagen</label>
       </div>
-      <div id="uploadZone"></div>
+      <div id="uploadZone" class="upload-dropzone"></div>
       <p class="upload-help">Sleep hier een bestand in of klik<br><small>Toegestaan: PDF, JPG, PNG</small></p>
     </div>
   `;
   tab.appendChild(uploadKaart);
 
-  // 🔁 Upload-logica
+  // 🔁 Uploadlogica
   const docMgr = new DocumentManager("paard", paard.id);
   const uploadZone = uploadKaart.querySelector("#uploadZone");
 
@@ -408,15 +449,13 @@ showPaardDetails(paard) {
     });
   };
 
-  // Initieel type: paspoort
   renderUpload("paspoort");
 
-  // Verander upload-type via radio
   uploadKaart.querySelectorAll('input[name="uploadType"]').forEach(radio =>
     radio.addEventListener("change", e => renderUpload(e.target.value))
   );
 
-  // ⬅️ Terugknop
+  // ⬅️ Terug
   header.querySelector("#backBtn").addEventListener("click", () => this.showPaarden());
 }
 

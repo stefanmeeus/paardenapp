@@ -150,6 +150,11 @@ if (!document.getElementById("kaart-icon-styling")) {
       min-width: 300px;
       max-width: 400px;
     }
+      #tab-paarden > .kaart {
+  max-width: 600px;
+  margin: 1rem auto;
+}
+
   `;
   document.head.appendChild(style);
 }
@@ -343,4 +348,5 @@ export function renderKaartActies({ onEdit, onDelete }) {
   acties.append(editBtn, deleteBtn);
   return acties;
 }
+
 

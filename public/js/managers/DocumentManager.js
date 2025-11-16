@@ -44,7 +44,8 @@ export class DocumentManager {
       id: Date.now(),
       name: fileObj.name,
       data: fileObj.data,
-      date: new Date().toISOString()
+      date: new Date().toISOString(),
+      ...(type === "verslag" && { jaar: new Date().getFullYear().toString() }) // ✅ automatisch jaartal toevoegen
     };
 
     if (type === "paspoort") {
