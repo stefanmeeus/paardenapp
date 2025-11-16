@@ -4,7 +4,7 @@ import { ModalManager } from "./ModalManager.js";
 import { loadData, saveData } from "../storage.js";
 import { DataExchange } from "../export/DataExchange.js";
 import { DocumentManager } from "../managers/DocumentManager.js";
-import { renderKaart, renderKaartActies } from "./CardTemplates.js";
+import { renderKaart,renderKaartActies,renderDetailKaart } from "./CardTemplates.js";
 
 export class Renderer {
   constructor(container) {
@@ -87,8 +87,11 @@ export class Renderer {
 // -------------------------------------------------------
   // PAARDEN
   // -------------------------------------------------------
-showPaarden() {
+
+  showPaarden() {
+
   this._switchToTab("tab-paarden");
+  
 
   const paarden = loadData("paarden") || [];
   let currentPage = 1;
@@ -300,325 +303,123 @@ showPaarden() {
   render();
 }
 
-  showPaardDetails(paard) {
+showPaardDetails(paard) {
+  console.log("✅ Nieuwe showPaardDetails actief");
+
   const tab = document.getElementById("tab-paarden");
+  tab.innerHTML = "";
 
-  tab.innerHTML = `
-    <div class="tab-header">
-      <button class="back-btn" id="backBtn">⬅ Terug</button>
-      <h2>🐴 ${paard.naam}</h2>
-    </div>
-
-    <div class="paard-grid">
-      <div class="kaart">
-        <div class="kaart-header">
-          <h3>${paard.naam}</h3>
-        </div>
-        <div class="kaart-body">
-          <p><strong>Leeftijd:</strong> ${paard.leeftijd}</p>
-          <p><strong>Ras:</strong> ${paard.ras}</p>
-          <p><strong>Stallocatie:</strong> ${paard.stallocatie}</p>
-          <p><strong>Stalnr:</strong> ${paard.stalnr}</p>
-          <p><strong>Training:</strong> ${paard.training ? "✅ Ja" : "❌ Nee"}</p>
-          <p><strong>Trainer:</strong> ${paard.trainer}</p>
-          <p><strong>Eigenaar:</strong> ${paard.eigenaar}</p>
-          <p><strong>Dierenarts:</strong> ${paard.dierenarts}</p>
-          <p><strong>Hoefsmid:</strong> ${paard.hoefsmid}</p>
-          <p><strong>Vaccinatie:</strong> ${paard.vaccinatie}</p>
-          <p><strong>Ontworming:</strong> ${paard.ontworming}</p>
-          <p><strong>Opmerkingen:</strong> ${paard.opmerkingen || "–"}</p>
-        </div>
-        <div class="card-actions">
-          <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
-          <button id="deleteBtn" class="btn-secondary">🗑️ Verwijderen</button>
-        </div>
-      </div>
-    </div>
-
-    <div class="kaart">
-      <div class="kaart-header">
-        <h3>📁 Documenten</h3>
-      </div>
-      <div class="kaart-body">
-        <p><strong>📘 Paspoort:</strong> 
-          ${paard.paspoort 
-            ? `<a href="${paard.paspoort.data}" target="_blank">${paard.paspoort.name}</a>` 
-            : "Geen document"}
-        </p>
-
-        <p><strong>🩺 Dierenartsverslagen:</strong></p>
-        <ul>
-          ${
-            paard.verslagen && paard.verslagen.length
-              ? paard.verslagen.map(doc => `<li><a href="${doc.data}" target="_blank">${doc.name}</a></li>`).join("")
-              : "<li>Geen verslagen beschikbaar</li>"
-          }
-        </ul>
-      </div>
-    </div>
-
-    <div class="kaart">
-      <div class="kaart-header">
-        <h3>📂 Upload nieuwe documenten</h3>
-      </div>
-      <div class="kaart-body">
-        <div class="upload-group">
-          <h4>📘 Paspoort (1 bestand)</h4>
-          <div id="paspoortUpload"></div>
-          <p class="upload-help">Toegestaan: PDF, JPG, PNG</p>
-        </div>
-
-        <div class="upload-group">
-          <h4>🩺 Dierenartsverslagen (meerdere bestanden)</h4>
-          <div id="verslagenUpload"></div>
-          <p class="upload-help">Toegestaan: PDF, JPG, PNG</p>
-        </div>
-      </div>
-    </div>
+  // 🔙 Terugknop + Titel
+  const header = document.createElement("div");
+  header.className = "tab-header";
+  header.innerHTML = `
+    <button class="back-btn" id="backBtn">⬅ Terug</button>
+    <h2>🐴 ${paard.naam}</h2>
   `;
+  tab.appendChild(header);
 
-  // Event handlers
-  document.getElementById("backBtn").addEventListener("click", () => this.showPaarden());
-
-  document.getElementById("editBtn").addEventListener("click", () => {
-    this.modals.openPaardForm(paard, () => this.showPaarden());
-  });
-
-  document.getElementById("deleteBtn").addEventListener("click", () => {
-    if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
-      const paarden = loadData("paarden") || [];
-      const nieuwLijst = paarden.filter(p => p.id !== paard.id);
-      saveData("paarden", nieuwLijst);
-      this.showPaarden();
+  // ✏️🗑️ Actieknoppen
+  const acties = renderKaartActies({
+    onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
+    onDelete: () => {
+      if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
+        const paarden = loadData("paarden") || [];
+        const nieuweLijst = paarden.filter(p => p.id !== paard.id);
+        saveData("paarden", nieuweLijst);
+        this.showPaarden();
+      }
     }
   });
 
-  const docMgr = new DocumentManager("paard", paard.id);
+  // 🐴 Paardgegevens-kaart (met juiste opmaak)
+  const velden = [
+    "leeftijd", "ras", "stallocatie", "stalnr", "training", "trainer",
+    "eigenaar", "dierenarts", "hoefsmid", "vaccinatie", "ontworming", "opmerkingen"
+  ];
 
-  docMgr.renderUploadUI(document.getElementById("paspoortUpload"), {
-    type: "paspoort",
-    max: 1,
-    onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
-  });
-
-  docMgr.renderUploadUI(document.getElementById("verslagenUpload"), {
-    type: "verslag",
-    multiple: true,
-    onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
-  });
-}
-
-  // -------------------------------------------------------
-  // Stallen
-  // ------------------------------------------------------
-showStallen() {
-  this._switchToTab("tab-stallen");
-
-  const container = document.getElementById("stallenList");
-  const locaties = loadData("locaties") || [];
-  const stallen = loadData("stallen") || [];
-  const paarden = loadData("paarden") || [];
-
-  container.innerHTML = `
-    <div class="kaart-toolbar">
-      <button id="addLocatie" class="btn btn-secondary">➕ Locatie</button>
-      <button id="addStal" class="btn btn-primary">➕ Stal</button>
-      <button id="exportStallen" class="btn btn-secondary">📤 Exporteer</button>
-      <button id="downloadTemplateStallen" class="btn btn-secondary">📄 Sjabloon</button>
-      <label class="btn btn-secondary">
-        📥 Importeren
-        <input type="file" id="importStallenInput" accept=".xlsx, .xls" hidden />
-      </label>
-      <input type="text" id="stalZoek" class="search-input" placeholder="Zoek op locatie" />
-    </div>
-
-    <div class="paard-grid locatie-grid"></div>
-  `;
-
-  const grid = container.querySelector(".locatie-grid");
-
-  locaties.forEach(loc => {
-    const stallenOpLocatie = stallen.filter(s => s.locatieId == loc.id);
-    const totaal = stallenOpLocatie.length;
-    const vrij = stallenOpLocatie.filter(s => !s.paardId).length;
-
-    const kaart = renderKaart({
-      type: "locatie",
-      data: {
-        id: loc.id,
-        naam: loc.naam,
-        totaal,
-        vrij
-      }
-    });
-
-    kaart.style.cursor = "pointer";
-    kaart.addEventListener("click", () => this.showStalDetails(loc.id));
-
-    // ✏️ Bewerken knop
-    const editBtn = document.createElement("button");
-    editBtn.className = "btn-icon";
-    editBtn.innerHTML = "✏️";
-    editBtn.title = "Locatie bewerken";
-    editBtn.addEventListener("click", e => {
-      e.stopPropagation();
-      this.modals.openStalLocatieForm(loc, () => this.showStallen());
-    });
-
-    // 🗑 Verwijderen knop
-    const deleteBtn = document.createElement("button");
-    deleteBtn.className = "btn-icon";
-    deleteBtn.innerHTML = "🗑️";
-    deleteBtn.title = "Locatie verwijderen";
-    deleteBtn.addEventListener("click", e => {
-      e.stopPropagation();
-
-      const bevestig = confirm(`❗ Weet je zeker dat je locatie '${loc.naam}' wilt verwijderen?`);
-      if (!bevestig) return;
-
-      const heeftStallen = stallen.some(s => s.locatieId == loc.id);
-      if (heeftStallen) {
-        alert("⚠️ Deze locatie bevat nog stallen. Verwijder deze eerst.");
-        return;
-      }
-
-      const nieuw = locaties.filter(l => l.id !== loc.id);
-      saveData("locaties", nieuw);
-      this.showStallen();
-    });
-
-    // Container voor actieknoppen
-    const acties = document.createElement("div");
-    acties.className = "kaart-acties";
-    acties.append(editBtn, deleteBtn);
-
-    const body = kaart.querySelector(".kaart-body");
-    body.appendChild(acties);
-
-    grid.appendChild(kaart);
-  });
-
-  // Knop acties
-  document.getElementById("addLocatie").addEventListener("click", () =>
-    this.modals.openStalLocatieForm(() => this.showStallen())
-  );
-
-  document.getElementById("addStal").addEventListener("click", () =>
-    this.modals.openStalForm(() => this.showStallen())
-  );
-
-  document.getElementById("exportStallen").addEventListener("click", () =>
-    DataExchange.exportStallen(locaties, stallen, paarden)
-  );
-
-  document.getElementById("downloadTemplateStallen").addEventListener("click", () =>
-    DataExchange.downloadStallenTemplate()
-  );
-
-  document.getElementById("importStallenInput").addEventListener("change", async e => {
-    const file = e.target.files[0];
-    if (file) {
-      await DataExchange.importStallen(file, () => this.showStallen());
-    }
-  });
-
-  document.getElementById("stalZoek").addEventListener("input", e => {
-    const term = e.target.value.toLowerCase();
-    document.querySelectorAll(".kaart").forEach(kaart => {
-      const tekst = kaart.textContent.toLowerCase();
-      kaart.style.display = tekst.includes(term) ? "" : "none";
-    });
-  });
-}
-
-showStalDetails(locatieId) {
-  const container = document.getElementById("stallenList");
-  const locaties = loadData("locaties") || [];
-  const stallen = loadData("stallen") || [];
-  const paarden = loadData("paarden") || [];
-
-  const locatie = locaties.find(l => String(l.id) === String(locatieId));
-  const filtered = stallen.filter(s => String(s.locatieId) === String(locatieId));
-
-  container.innerHTML = `
-    <div class="tab-header">
-      <button class="back-btn" id="back-to-locaties">⬅ Terug</button>
-      <h2><img src="../img/icons/stal.png" class="kaart-icon" /> ${locatie.naam}</h2>
-    </div>
-    <div class="paard-grid"></div>
-  `;
-
-  // ✅ Back button correct aansluiten
-  const backBtn = document.getElementById("back-to-locaties");
-  if (backBtn) {
-    backBtn.addEventListener("click", () => {
-      console.log("⬅ Terug naar locaties");
-      this.showStallen();
-    });
-  } else {
-    console.warn("⚠️ Knop #back-stallen niet gevonden");
+  // ✅ Zet training-boolean om naar tekst
+  if (paard.training !== undefined) {
+    paard.training = paard.training ? "✅ Ja" : "❌ Nee";
   }
 
-  const grid = container.querySelector(".paard-grid");
-
-  filtered.forEach(stal => {
-    const paard = paarden.find(p => p.id === stal.paardId) || null;
-
-    const kaart = renderKaart({
-      type: "stal",
-      data: {
-        ...stal,
-        paard,
-        locatienaam: locatie.naam
-      }
-    });
-
-    grid.appendChild(kaart);
+  const detailKaart = renderDetailKaart({
+    type: "paard",
+    data: paard,
+    velden,
+    acties
   });
 
-  // Verwijderen
-  grid.querySelectorAll(".verwijderBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      if (confirm("Verwijder deze stal?")) {
-        const nieuwe = stallen.filter(s => String(s.id) !== id);
-        saveData("stallen", nieuwe);
-        this.showStalDetails(locatieId);
+  tab.appendChild(detailKaart);
+
+  // 📁 Documenten-kaart
+  const documentenKaart = document.createElement("div");
+  documentenKaart.className = "kaart kaart-paarden";
+  documentenKaart.innerHTML = `
+    <div class="kaart-header">📁 Documenten</div>
+    <div class="kaart-body">
+      <p><strong>📘 Paspoort:</strong> ${
+        paard.paspoort
+          ? `<a href="${paard.paspoort.data}" target="_blank">${paard.paspoort.name}</a>`
+          : "Geen document"
+      }</p>
+
+      <p><strong>🩺 Dierenartsverslagen:</strong></p>
+      <ul>
+        ${
+          paard.verslagen?.length
+            ? paard.verslagen
+                .map(doc => `<li><a href="${doc.data}" target="_blank">${doc.name}</a></li>`)
+                .join("")
+            : "<li>Geen verslagen beschikbaar</li>"
+        }
+      </ul>
+    </div>
+  `;
+  tab.appendChild(documentenKaart);
+
+  // ⬆️ Upload-kaart met radiobutton/dropbox
+  const uploadKaart = document.createElement("div");
+  uploadKaart.className = "kaart kaart-paarden";
+  uploadKaart.innerHTML = `
+    <div class="kaart-header">📤 Upload nieuwe documenten</div>
+    <div class="kaart-body">
+      <div class="upload-choice">
+        <label><input type="radio" name="uploadType" value="paspoort" checked /> 📘 Paspoort</label>
+        <label><input type="radio" name="uploadType" value="verslagen" /> 🩺 Dierenartsverslagen</label>
+      </div>
+      <div id="uploadZone"></div>
+      <p class="upload-help">Sleep hier een bestand in of klik<br><small>Toegestaan: PDF, JPG, PNG</small></p>
+    </div>
+  `;
+  tab.appendChild(uploadKaart);
+
+  // 🔁 Upload-logica
+  const docMgr = new DocumentManager("paard", paard.id);
+  const uploadZone = uploadKaart.querySelector("#uploadZone");
+
+  const renderUpload = (type) => {
+    docMgr.renderUploadUI(uploadZone, {
+      type: type === "paspoort" ? "paspoort" : "verslag",
+      multiple: type === "verslagen",
+      onUploadComplete: () => {
+        const nieuw = loadData("paarden").find(p => p.id === paard.id);
+        this.showPaardDetails(nieuw);
       }
     });
-  });
+  };
 
-  // Ontkoppelen
-  grid.querySelectorAll(".ontkoppelBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      const index = stallen.findIndex(s => String(s.id) === id);
-      if (index >= 0) {
-        stallen[index].paardId = null;
-        saveData("stallen", stallen);
-        this.showStalDetails(locatieId);
-      }
-    });
-  });
+  // Initieel type: paspoort
+  renderUpload("paspoort");
 
-  // Koppelen
-  grid.querySelectorAll(".koppelBtn").forEach(btn => {
-    btn.addEventListener("click", () => {
-      const id = btn.dataset.id;
-      const stallen = loadData("stallen") || [];
-      const stalObj = stallen.find(s => String(s.id) === String(id));
+  // Verander upload-type via radio
+  uploadKaart.querySelectorAll('input[name="uploadType"]').forEach(radio =>
+    radio.addEventListener("change", e => renderUpload(e.target.value))
+  );
 
-      if (!stalObj) {
-        console.error("❌ Stal niet gevonden voor koppelen:", id);
-        return;
-      }
-
-      this.modals.openPaardKoppelenForm(stalObj, stalObj.locatienaam, () => 
-        this.showStalDetails(locatieId)
-      );
-    });
-  });
+  // ⬅️ Terugknop
+  header.querySelector("#backBtn").addEventListener("click", () => this.showPaarden());
 }
+
   // -------------------------------------------------------
   // Contacten
   // -------------------------------------------------------

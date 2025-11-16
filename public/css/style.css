@@ -236,3 +236,18 @@ label.btn-secondary {
     font-size: 0.65rem;
   }
 }
+.upload-dropzone {
+  border: 2px dashed #aad;
+  background: #f9f9f9;
+  padding: 2rem;
+  text-align: center;
+  color: #333;
+  font-size: 0.95rem;
+  border-radius: 8px;
+  margin-top: 1rem;
+  transition: background 0.3s;
+}
+.upload-dropzone.dragover {
+  background: #e0f0ff;
+  border-color: #3399ff;
+}
