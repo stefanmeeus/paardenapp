@@ -246,4 +246,101 @@ export function renderKaart({ type, data }) {
   `);
 
   return kaart;
+
 }
+/**
+ * Genereert een dynamische detailkaart op basis van velden + acties.
+ * @param {Object} param0
+ * @param {string} param0.type - Type, bv: paard, contact
+ * @param {Object} param0.data - Gegevensobject
+ * @param {string[]} param0.velden - Array van veldnamen (string)
+ * @param {string} [param0.icon] - Optioneel pad naar een icoon
+ * @param {Array} [param0.acties] - Array van actieknoppen [{ label, class, onClick }]
+ * @returns {HTMLElement}
+ */
+export function renderDetailKaart({ type, data, velden, icon, acties = [] }) {
+  const kaart = document.createElement("div");
+  kaart.className = `kaart kaart-${type}`;
+
+  // Header
+  const header = document.createElement("div");
+  header.className = "kaart-header";
+
+  const img = document.createElement("img");
+  img.src = icon || `../img/icons/${type}.png`;
+  img.alt = type;
+  img.className = "kaart-icon-lg";
+
+  const title = document.createElement("span");
+  title.textContent = data.naam || data.titel || "[Geen titel]";
+
+  header.append(img, title);
+
+  // Body
+  const body = document.createElement("div");
+  body.className = "kaart-body";
+
+  velden.forEach(veld => {
+    const value = data[veld];
+    const p = document.createElement("p");
+    p.innerHTML = `<strong>${veld}:</strong> ${value !== undefined && value !== "" ? value : "–"}`;
+    body.appendChild(p);
+  });
+
+  kaart.append(header, body);
+
+  // Actieknoppen
+  if (acties.length > 0) {
+    const actiesContainer = document.createElement("div");
+    actiesContainer.className = "kaart-acties";
+
+    acties.forEach(({ label, class: btnClass, onClick }) => {
+      const btn = document.createElement("button");
+      btn.className = `btn ${btnClass || "btn-secondary"}`;
+      btn.textContent = label;
+      if (typeof onClick === "function") {
+        btn.addEventListener("click", onClick);
+      }
+      actiesContainer.appendChild(btn);
+    });
+
+    kaart.appendChild(actiesContainer);
+  }
+
+  return kaart;
+}
+/**
+ * Genereert standaard actieknoppen (bewerken + verwijderen) voor een kaart.
+ * @param {Object} options
+ * @param {Function} options.onEdit - Wordt uitgevoerd bij klik op ✏️
+ * @param {Function} options.onDelete - Wordt uitgevoerd bij klik op 🗑️
+ * @returns {HTMLElement} kaart-acties element
+ */
+export function renderKaartActies({ onEdit, onDelete }) {
+  const acties = document.createElement("div");
+  acties.className = "kaart-acties";
+
+  // ✏️ Bewerken
+  const editBtn = document.createElement("button");
+  editBtn.className = "btn btn-icon btn-primary";
+  editBtn.innerHTML = "✏️";
+  editBtn.title = "Bewerken";
+  editBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    onEdit?.();
+  });
+
+  // 🗑️ Verwijderen
+  const deleteBtn = document.createElement("button");
+  deleteBtn.className = "btn btn-icon btn-secondary";
+  deleteBtn.innerHTML = "🗑️";
+  deleteBtn.title = "Verwijderen";
+  deleteBtn.addEventListener("click", (e) => {
+    e.stopPropagation();
+    onDelete?.();
+  });
+
+  acties.append(editBtn, deleteBtn);
+  return acties;
+}
+

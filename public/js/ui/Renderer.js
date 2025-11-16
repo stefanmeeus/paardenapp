@@ -4,7 +4,7 @@ import { ModalManager } from "./ModalManager.js";
 import { loadData, saveData } from "../storage.js";
 import { DataExchange } from "../export/DataExchange.js";
 import { DocumentManager } from "../managers/DocumentManager.js";
-import { renderKaart } from "./CardTemplates.js"; // ✅ juiste import
+import { renderKaart, renderKaartActies } from "./CardTemplates.js";
 
 export class Renderer {
   constructor(container) {
@@ -109,16 +109,16 @@ showPaarden() {
   backBtn.addEventListener("click", () => this.showDashboard());
 
   const title = document.createElement("h2");
-  title.textContent = "📁 Paarden";
+  title.innerHTML = `<img src="../img/icons/Paard.png" class="kaart-icon-lg" /> Paarden`;
 
   header.append(backBtn, title);
   container.appendChild(header);
 
-  // === NIEUWE TOOLBAR (centrale layout via kaart-toolbar)
+  // === TOOLBAR
   const toolbar = document.createElement("div");
   toolbar.className = "kaart-toolbar";
 
-  // Zoekbalk
+  // Zoekveld
   const searchInput = document.createElement("input");
   searchInput.type = "text";
   searchInput.className = "search-input";
@@ -130,7 +130,7 @@ showPaarden() {
     render();
   });
 
-  // Page-size dropdown
+  // Page size dropdown
   const pageSizeWrapper = document.createElement("div");
   pageSizeWrapper.className = "page-size-wrapper";
   pageSizeWrapper.innerHTML = `
@@ -161,20 +161,24 @@ showPaarden() {
   const exportBtn = document.createElement("button");
   exportBtn.className = "btn-secondary";
   exportBtn.textContent = "📤 Exporteer";
-  exportBtn.addEventListener("click", () => DataExchange.exportPaardenToExcel());
+  exportBtn.addEventListener("click", () =>
+    DataExchange.exportPaardenToExcel()
+  );
 
-  // Template
+  // Template (lege Excel)
   const templateBtn = document.createElement("button");
   templateBtn.className = "btn-secondary";
   templateBtn.textContent = "📄 Sjabloon";
-  templateBtn.addEventListener("click", () => DataExchange.downloadPaardenTemplate());
+  templateBtn.addEventListener("click", () =>
+    DataExchange.downloadPaardenTemplate()
+  );
 
   // Import
   const importLabel = document.createElement("label");
   importLabel.className = "btn-secondary";
   importLabel.innerHTML = `
     📥 Importeren
-    <input type="file" id="importInput" accept=".xlsx,.xls" style="display: none;" />
+    <input type="file" accept=".xlsx,.xls" style="display:none;" />
   `;
   importLabel.querySelector("input").addEventListener("change", async e => {
     const file = e.target.files[0];
@@ -191,7 +195,7 @@ showPaarden() {
     this.modals.openPaardForm(null, () => this.showPaarden())
   );
 
-  // 👉 Voeg ALLES toe aan de nieuwe gestylede toolbar
+  // Toolbar toevoegen
   toolbar.append(
     searchInput,
     pageSizeWrapper,
@@ -201,10 +205,9 @@ showPaarden() {
     importLabel,
     addBtn
   );
-
   container.appendChild(toolbar);
 
-  // === LIJSTCONTAINER
+  // === LIJST
   const listContainer = document.createElement("div");
   listContainer.id = "paardenList";
   container.appendChild(listContainer);
@@ -238,14 +241,36 @@ showPaarden() {
       grid.className = "paard-grid";
 
       pageItems.forEach(paard => {
-        const kaart = Renderer.renderPaardKaart(paard);
+        const kaart = renderKaart({
+          type: "paard",
+          data: paard
+        });
+
+        // ✅ Actieknoppen (bewerken/verwijderen)
+        const acties = renderKaartActies({
+          onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
+          onDelete: () => {
+            if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
+              const nieuwLijst = paarden.filter(p => p.id !== paard.id);
+              saveData("paarden", nieuwLijst);
+              paarden.splice(0, paarden.length, ...nieuwLijst);
+              render();
+            }
+          }
+        });
+
+        kaart.appendChild(acties);
+
+        // Detailweergave openen bij klik op kaart
         kaart.addEventListener("click", () => this.showPaardDetails(paard));
+
         grid.appendChild(kaart);
       });
 
       listContainer.appendChild(grid);
     }
 
+    // === PAGINERING
     const prev = document.createElement("button");
     prev.textContent = "◀";
     prev.disabled = currentPage === 1;
@@ -275,38 +300,46 @@ showPaarden() {
   render();
 }
 
-    showPaardDetails(paard) {
-    const tab = document.getElementById("tab-paarden");
+  showPaardDetails(paard) {
+  const tab = document.getElementById("tab-paarden");
 
-    tab.innerHTML = `
-      <div class="tab-header">
-        <button class="back-btn" id="backBtn">⬅ Terug</button>
-        <h2>🐴 ${paard.naam}</h2>
+  tab.innerHTML = `
+    <div class="tab-header">
+      <button class="back-btn" id="backBtn">⬅ Terug</button>
+      <h2>🐴 ${paard.naam}</h2>
+    </div>
+
+    <div class="paard-grid">
+      <div class="kaart">
+        <div class="kaart-header">
+          <h3>${paard.naam}</h3>
+        </div>
+        <div class="kaart-body">
+          <p><strong>Leeftijd:</strong> ${paard.leeftijd}</p>
+          <p><strong>Ras:</strong> ${paard.ras}</p>
+          <p><strong>Stallocatie:</strong> ${paard.stallocatie}</p>
+          <p><strong>Stalnr:</strong> ${paard.stalnr}</p>
+          <p><strong>Training:</strong> ${paard.training ? "✅ Ja" : "❌ Nee"}</p>
+          <p><strong>Trainer:</strong> ${paard.trainer}</p>
+          <p><strong>Eigenaar:</strong> ${paard.eigenaar}</p>
+          <p><strong>Dierenarts:</strong> ${paard.dierenarts}</p>
+          <p><strong>Hoefsmid:</strong> ${paard.hoefsmid}</p>
+          <p><strong>Vaccinatie:</strong> ${paard.vaccinatie}</p>
+          <p><strong>Ontworming:</strong> ${paard.ontworming}</p>
+          <p><strong>Opmerkingen:</strong> ${paard.opmerkingen || "–"}</p>
+        </div>
+        <div class="card-actions">
+          <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
+          <button id="deleteBtn" class="btn-secondary">🗑️ Verwijderen</button>
+        </div>
       </div>
+    </div>
 
-      <div class="card-details">
-        <p><strong>Naam:</strong> ${paard.naam}</p>
-        <p><strong>Leeftijd:</strong> ${paard.leeftijd}</p>
-        <p><strong>Ras:</strong> ${paard.ras}</p>
-        <p><strong>Stallocatie:</strong> ${paard.stallocatie}</p>
-        <p><strong>Stalnr:</strong> ${paard.stalnr}</p>
-        <p><strong>Training:</strong> ${paard.training ? "✅ Ja" : "❌ Nee"}</p>
-        <p><strong>Trainer:</strong> ${paard.trainer}</p>
-        <p><strong>Eigenaar:</strong> ${paard.eigenaar}</p>
-        <p><strong>Dierenarts:</strong> ${paard.dierenarts}</p>
-        <p><strong>Hoefsmid:</strong> ${paard.hoefsmid}</p>
-        <p><strong>Vaccinatie:</strong> ${paard.vaccinatie}</p>
-        <p><strong>Ontworming:</strong> ${paard.ontworming}</p>
-        <p><strong>Opmerkingen:</strong> ${paard.opmerkingen || "–"}</p>
-      </div>
-
-      <div class="card-actions">
-        <button id="editBtn" class="btn-primary">✏️ Bewerken</button>
-        <button id="deleteBtn" class="btn-secondary">🗑️ Verwijderen</button>
-      </div>
-
-      <div class="card-docs">
+    <div class="kaart">
+      <div class="kaart-header">
         <h3>📁 Documenten</h3>
+      </div>
+      <div class="kaart-body">
         <p><strong>📘 Paspoort:</strong> 
           ${paard.paspoort 
             ? `<a href="${paard.paspoort.data}" target="_blank">${paard.paspoort.name}</a>` 
@@ -322,10 +355,13 @@ showPaarden() {
           }
         </ul>
       </div>
+    </div>
 
-      <div class="document-section">
+    <div class="kaart">
+      <div class="kaart-header">
         <h3>📂 Upload nieuwe documenten</h3>
-
+      </div>
+      <div class="kaart-body">
         <div class="upload-group">
           <h4>📘 Paspoort (1 bestand)</h4>
           <div id="paspoortUpload"></div>
@@ -338,37 +374,39 @@ showPaarden() {
           <p class="upload-help">Toegestaan: PDF, JPG, PNG</p>
         </div>
       </div>
-    `;
+    </div>
+  `;
 
-    document.getElementById("backBtn").addEventListener("click", () => this.showPaarden());
+  // Event handlers
+  document.getElementById("backBtn").addEventListener("click", () => this.showPaarden());
 
-    document.getElementById("editBtn").addEventListener("click", () => {
-      this.modals.openPaardForm(paard, () => this.showPaarden());
-    });
+  document.getElementById("editBtn").addEventListener("click", () => {
+    this.modals.openPaardForm(paard, () => this.showPaarden());
+  });
 
-    document.getElementById("deleteBtn").addEventListener("click", () => {
-      if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
-        const paarden = loadData("paarden") || [];
-        const nieuwLijst = paarden.filter(p => p.id !== paard.id);
-        saveData("paarden", nieuwLijst);
-        this.showPaarden();
-      }
-    });
+  document.getElementById("deleteBtn").addEventListener("click", () => {
+    if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
+      const paarden = loadData("paarden") || [];
+      const nieuwLijst = paarden.filter(p => p.id !== paard.id);
+      saveData("paarden", nieuwLijst);
+      this.showPaarden();
+    }
+  });
 
-    const docMgr = new DocumentManager("paard", paard.id);
+  const docMgr = new DocumentManager("paard", paard.id);
 
-    docMgr.renderUploadUI(document.getElementById("paspoortUpload"), {
-      type: "paspoort",
-      max: 1,
-      onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
-    });
+  docMgr.renderUploadUI(document.getElementById("paspoortUpload"), {
+    type: "paspoort",
+    max: 1,
+    onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
+  });
 
-    docMgr.renderUploadUI(document.getElementById("verslagenUpload"), {
-      type: "verslag",
-      multiple: true,
-      onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
-    });
-  }
+  docMgr.renderUploadUI(document.getElementById("verslagenUpload"), {
+    type: "verslag",
+    multiple: true,
+    onUploadComplete: () => this.showPaardDetails(loadData("paarden").find(p => p.id === paard.id))
+  });
+}
 
   // -------------------------------------------------------
   // Stallen
