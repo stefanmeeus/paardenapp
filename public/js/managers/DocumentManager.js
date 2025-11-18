@@ -16,7 +16,7 @@ export class DocumentManager {
     // Initialiseer documenten indien niet aanwezig
     if (!this.entity.paspoort) this.entity.paspoort = null;
     if (!this.entity.verslagen) this.entity.verslagen = [];
-    if (!this.entity.contract) this.entity.contract = []; // ✅ toegevoegd
+    if (!this.entity.contract) this.entity.contract = [];
   }
 
   _saveEntity() {
@@ -36,7 +36,7 @@ export class DocumentManager {
   }
 
   getContracten() {
-    return (this.entity?.contract || []).sort((a, b) => b.date.localeCompare(a.date)); // ✅ nieuw
+    return (this.entity?.contract || []).sort((a, b) => b.date.localeCompare(a.date));
   }
 
   addDocument(type, fileObj) {
@@ -45,7 +45,7 @@ export class DocumentManager {
       name: fileObj.name,
       data: fileObj.data,
       date: new Date().toISOString(),
-      ...(type === "verslag" && { jaar: new Date().getFullYear().toString() }) // ✅ automatisch jaartal toevoegen
+      ...(type === "verslag" && { jaar: new Date().getFullYear().toString() })
     };
 
     if (type === "paspoort") {
@@ -53,7 +53,7 @@ export class DocumentManager {
     } else if (type === "verslag") {
       this.entity.verslagen.push(entry);
     } else if (type === "contract") {
-      this.entity.contract.push(entry); // ✅ toegevoegd
+      this.entity.contract.push(entry);
     }
 
     this._saveEntity();
@@ -65,7 +65,7 @@ export class DocumentManager {
     } else if (type === "verslag") {
       this.entity.verslagen = this.entity.verslagen.filter(doc => doc.id !== id);
     } else if (type === "contract") {
-      this.entity.contract = this.entity.contract.filter(doc => doc.id !== id); // ✅ toegevoegd
+      this.entity.contract = this.entity.contract.filter(doc => doc.id !== id);
     }
 
     this._saveEntity();
@@ -78,44 +78,20 @@ export class DocumentManager {
     }
 
     const dropArea = document.createElement("div");
-    dropArea.classList.add("drop-area");
+    dropArea.classList.add("upload-dropzone");
     dropArea.innerHTML = `
       <div class="drop-text">📁 Sleep hier een bestand in of klik</div>
       <input type="file" class="file-input" accept=".pdf,.png,.jpg,.jpeg" style="display:none" ${max === 1 ? "" : "multiple"} />
-      <ul class="file-list"></ul>
     `;
 
     container.innerHTML = "";
     container.appendChild(dropArea);
 
     const input = dropArea.querySelector(".file-input");
-    const list = dropArea.querySelector(".file-list");
 
     const refreshList = () => {
-      list.innerHTML = "";
-
-      if (type === "paspoort" && this.entity.paspoort) {
-        const doc = this.entity.paspoort;
-        list.innerHTML = `<li>${doc.name} <button data-id="${doc.id}" class="remove-btn">🗑️</button></li>`;
-      }
-
-      if (type === "verslag" || type === "contract") { // ✅ uitgebreid
-        const docList = type === "verslag" ? this.getVerslagen() : this.getContracten();
-        docList.forEach(doc => {
-          const li = document.createElement("li");
-          li.innerHTML = `${doc.name} <button data-id="${doc.id}" class="remove-btn">🗑️</button>`;
-          list.appendChild(li);
-        });
-      }
-
-      list.querySelectorAll(".remove-btn").forEach(btn => {
-        btn.addEventListener("click", () => {
-          const id = parseInt(btn.dataset.id);
-          this.removeDocument(type, id);
-          refreshList();
-          onUploadComplete();
-        });
-      });
+      // ⚠️ GEEN BESTANDEN TONEN IN DE DROPZONE
+      // Enkel dragtekst tonen, dus niks in HTML zetten
     };
 
     const handleFile = file => {
@@ -134,10 +110,10 @@ export class DocumentManager {
       reader.onload = e => {
         this.addDocument(type, {
           name: file.name,
-          data: e.target.result,
+          data: e.target.result
         });
         refreshList();
-        input.value = ""; // ✅ Reset input na upload
+        input.value = "";
         onUploadComplete();
       };
       reader.readAsDataURL(file);

@@ -304,11 +304,12 @@ export class Renderer {
 }
 
 showPaardDetails(paard) {
+  console.log("✅ showPaardDetails geladen voor paard:", paard.naam);
 
   const tab = document.getElementById("tab-paarden");
   tab.innerHTML = "";
 
-  // 🔙 Header met terugknop
+  // 🔙 Header
   const header = document.createElement("div");
   header.className = "tab-header";
   header.innerHTML = `
@@ -317,54 +318,43 @@ showPaardDetails(paard) {
   `;
   tab.appendChild(header);
 
-  // 🛠️ Bewerken / verwijderen knoppen
+  // ✅ Acties
   const acties = renderKaartActies({
     onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
     onDelete: () => {
       if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
-        const paarden = loadData("paarden") || [];
-        const nieuw = paarden.filter(p => p.id !== paard.id);
-        saveData("paarden", nieuw);
+        const lijst = loadData("paarden") || [];
+        const gefilterd = lijst.filter(p => p.id !== paard.id);
+        saveData("paarden", gefilterd);
         this.showPaarden();
       }
     }
   });
 
-  // ✅ Netjes formatten
+  // ✅ Zet booleans om naar emoji
   if (paard.training !== undefined) {
     paard.training = paard.training ? "✅ Ja" : "❌ Nee";
   }
 
-  // 🐴 GEGEVENS-KAART
-const velden = [
-  "leeftijd", "ras", "stallocatie", "stalnr", "training", "trainer",
-  "eigenaar", "dierenarts", "hoefsmid", "vaccinatie", "ontworming", "opmerkingen"
-];
+  // 🐴 GEGEVENSKAART
+  const velden = [
+    "leeftijd", "ras", "stallocatie", "stalnr", "training", "trainer",
+    "eigenaar", "dierenarts", "hoefsmid", "vaccinatie", "ontworming", "opmerkingen"
+  ];
 
-const kaartActies = renderKaartActies({
-  onEdit: () => this.modals.openPaardForm(paard, () => this.showPaarden()),
-  onDelete: () => {
-    if (confirm(`❗ Weet je zeker dat je ${paard.naam} wilt verwijderen?`)) {
-      const paarden = loadData("paarden") || [];
-      const nieuw = paarden.filter(p => p.id !== paard.id);
-      saveData("paarden", nieuw);
-      this.showPaarden();
-    }
-  }
-});
+  const gegevensKaart = renderDetailKaart({
+    type: "paard",
+    data: paard,
+    velden
+  });
 
-const gegevensKaart = renderDetailKaart({
-  type: "paard",
-  data: paard,
-  velden
-});
-
-gegevensKaart.querySelector(".kaart-body").appendChild(acties);
-tab.appendChild(gegevensKaart);
+  gegevensKaart.querySelector(".kaart-body").appendChild(acties);
+  tab.appendChild(gegevensKaart);
 
   // 📁 DOCUMENTEN-KAART
   const documentenKaart = document.createElement("div");
   documentenKaart.className = "kaart kaart-paarden";
+  documentenKaart.innerHTML = `<div class="kaart-header">📁 Documenten</div>`;
 
   const documentenBody = document.createElement("div");
   documentenBody.className = "kaart-body";
@@ -377,11 +367,10 @@ tab.appendChild(gegevensKaart);
   }`;
   documentenBody.appendChild(paspoort);
 
-  const verslagenP = document.createElement("p");
-  verslagenP.innerHTML = `<strong>🩺 Dierenartsverslagen:</strong>`;
-  documentenBody.appendChild(verslagenP);
+  const verslagenTitel = document.createElement("p");
+  verslagenTitel.innerHTML = `<strong>🩺 Dierenartsverslagen:</strong>`;
+  documentenBody.appendChild(verslagenTitel);
 
-  // 📂 Mappen per jaar
   const verslagenContainer = document.createElement("div");
   const verslagenPerJaar = {};
 
@@ -393,10 +382,10 @@ tab.appendChild(gegevensKaart);
 
   if (Object.keys(verslagenPerJaar).length > 0) {
     Object.keys(verslagenPerJaar)
-      .sort((a, b) => b - a) // Nieuwste eerst
+      .sort((a, b) => b - a)
       .forEach(jaar => {
-        const folder = document.createElement("div");
-        folder.innerHTML = `<strong>📁 ${jaar}</strong>`;
+        const mapHeader = document.createElement("div");
+        mapHeader.innerHTML = `<strong>📁 ${jaar}</strong>`;
 
         const ul = document.createElement("ul");
         verslagenPerJaar[jaar].forEach(doc => {
@@ -405,7 +394,7 @@ tab.appendChild(gegevensKaart);
           ul.appendChild(li);
         });
 
-        verslagenContainer.appendChild(folder);
+        verslagenContainer.appendChild(mapHeader);
         verslagenContainer.appendChild(ul);
       });
   } else {
@@ -413,14 +402,12 @@ tab.appendChild(gegevensKaart);
   }
 
   documentenBody.appendChild(verslagenContainer);
-  documentenKaart.innerHTML = `<div class="kaart-header">📁 Documenten</div>`;
   documentenKaart.appendChild(documentenBody);
   tab.appendChild(documentenKaart);
 
   // ⬆️ UPLOAD-KAART
   const uploadKaart = document.createElement("div");
   uploadKaart.className = "kaart kaart-paarden";
-
   uploadKaart.innerHTML = `
     <div class="kaart-header">📤 Upload nieuwe documenten</div>
     <div class="kaart-body">
@@ -434,7 +421,7 @@ tab.appendChild(gegevensKaart);
   `;
   tab.appendChild(uploadKaart);
 
-  // 🔁 Uploadlogica
+  // 🔁 Upload logica
   const docMgr = new DocumentManager("paard", paard.id);
   const uploadZone = uploadKaart.querySelector("#uploadZone");
 
@@ -443,8 +430,8 @@ tab.appendChild(gegevensKaart);
       type: type === "paspoort" ? "paspoort" : "verslag",
       multiple: type === "verslagen",
       onUploadComplete: () => {
-        const nieuw = loadData("paarden").find(p => p.id === paard.id);
-        this.showPaardDetails(nieuw);
+        const herladen = loadData("paarden").find(p => p.id === paard.id);
+        this.showPaardDetails(herladen);
       }
     });
   };
@@ -458,6 +445,7 @@ tab.appendChild(gegevensKaart);
   // ⬅️ Terug
   header.querySelector("#backBtn").addEventListener("click", () => this.showPaarden());
 }
+
 
   // -------------------------------------------------------
   // Contacten
